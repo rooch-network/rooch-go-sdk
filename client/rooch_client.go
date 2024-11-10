@@ -23,17 +23,25 @@ const emptyString = ""
 type Signer crypto.Signer
 
 type RoochClient struct {
-	url string
+	client  *jsonrpc.Client // jsonrpc client to use for requests
+	url     string
+	chainID uint64 // Chain ID of the network e.g. 2 for Testnet
+	//baseUrl *url.URL
 }
 
-func NewRoochClient(url string) RoochClient {
-	return RoochClient{
-		url: url,
+func NewRoochClient(url string) (RoochClient, error) {
+	client, err := jsonrpc.NewClient(url)
+	if err != nil {
+		return RoochClient{}, err
 	}
+	return RoochClient{
+		client: client,
+		url:    url,
+	}, nil
 }
 
-func (this *RoochClient) Call(context context.Context, serviceMethod string, reply interface{}, args interface{}) error {
-	client, err := jsonrpc.NewClient(this.url)
+func (c *RoochClient) Call(context context.Context, serviceMethod string, reply interface{}, args interface{}) error {
+	client, err := jsonrpc.NewClient(c.url)
 	if err != nil {
 		return errors.Wrap(err, fmt.Sprintf("call method %s err: ", serviceMethod))
 	}
@@ -47,20 +55,20 @@ func (this *RoochClient) Call(context context.Context, serviceMethod string, rep
 	return nil
 }
 
-func (this *RoochClient) GetEvents(context context.Context, eventFilter *EventFilter) ([]Event, error) {
+func (c *RoochClient) GetEvents(context context.Context, eventFilter *EventFilter) ([]Event, error) {
 	var result []Event
 	params := []interface{}{eventFilter}
-	err := this.Call(context, "chain.get_events", &result, params)
+	err := c.Call(context, "chain.get_events", &result, params)
 	if err != nil {
 		return nil, errors.Wrap(err, "call method chain.get_events error ")
 	}
 	return result, nil
 }
 
-func (this *RoochClient) GetTransactionByHash(context context.Context, transactionHash string) (*Transaction, error) {
+func (c *RoochClient) GetTransactionByHash(context context.Context, transactionHash string) (*Transaction, error) {
 	result := &Transaction{}
 	params := []string{transactionHash}
-	err := this.Call(context, "chain.get_transaction", result, params)
+	err := c.Call(context, "chain.get_transaction", result, params)
 
 	if err != nil {
 		return nil, errors.Wrap(err, "call method chain.get_transaction error ")
@@ -69,10 +77,10 @@ func (this *RoochClient) GetTransactionByHash(context context.Context, transacti
 	return result, nil
 }
 
-func (this *RoochClient) GetTransactionInfoByHash(context context.Context, transactionHash string) (*TransactionInfo, error) {
+func (c *RoochClient) GetTransactionInfoByHash(context context.Context, transactionHash string) (*TransactionInfo, error) {
 	result := &TransactionInfo{}
 	params := []string{transactionHash}
-	err := this.Call(context, "chain.get_transaction_info", result, params)
+	err := c.Call(context, "chain.get_transaction_info", result, params)
 
 	if err != nil {
 		return nil, errors.Wrap(err, "call method chain.get_transaction_info error ")
@@ -81,10 +89,10 @@ func (this *RoochClient) GetTransactionInfoByHash(context context.Context, trans
 	return result, nil
 }
 
-func (this *RoochClient) GetTransactionEventByHash(context context.Context, transactionHash string) ([]Event, error) {
+func (c *RoochClient) GetTransactionEventByHash(context context.Context, transactionHash string) ([]Event, error) {
 	var result []Event
 	params := []string{transactionHash}
-	err := this.Call(context, "chain.get_events_by_txn_hash", &result, params)
+	err := c.Call(context, "chain.get_events_by_txn_hash", &result, params)
 
 	if err != nil {
 		return nil, errors.Wrap(err, "call method chain.get_events_by_txn_hash error ")
@@ -93,10 +101,10 @@ func (this *RoochClient) GetTransactionEventByHash(context context.Context, tran
 	return result, nil
 }
 
-func (this *RoochClient) GetBlockByHash(context context.Context, blockHash string) (*Block, error) {
+func (c *RoochClient) GetBlockByHash(context context.Context, blockHash string) (*Block, error) {
 	result := &Block{}
 	params := []string{blockHash}
-	err := this.Call(context, "chain.get_block_by_hash", result, params)
+	err := c.Call(context, "chain.get_block_by_hash", result, params)
 
 	if err != nil {
 		return nil, errors.Wrap(err, "call method chain.get_block_by_hash ")
@@ -105,10 +113,10 @@ func (this *RoochClient) GetBlockByHash(context context.Context, blockHash strin
 	return result, nil
 }
 
-func (this *RoochClient) GetBlockByNumber(context context.Context, number int) (*Block, error) {
+func (c *RoochClient) GetBlockByNumber(context context.Context, number int) (*Block, error) {
 	result := &Block{}
 	params := []int{number}
-	err := this.Call(context, "chain.get_block_by_number", result, params)
+	err := c.Call(context, "chain.get_block_by_number", result, params)
 
 	if err != nil {
 		return nil, errors.Wrap(err, "call method chain.get_block_by_number ")
@@ -117,20 +125,20 @@ func (this *RoochClient) GetBlockByNumber(context context.Context, number int) (
 	return result, nil
 }
 
-//func (this *RoochClient) GetBalanceOfStc(context context.Context, address string) (*big.Int, error) {
-//	ls, err := this.ListResource(context, address)
+//func (c *RoochClient) GetBalanceOfStc(context context.Context, address string) (*big.Int, error) {
+//	ls, err := c.ListResource(context, address)
 //	if err != nil {
 //		return nil, err
 //	}
 //	return ls.GetBalanceOfStc()
 //}
 
-//func (this *RoochClient) ListResource(context context.Context, address string) (*ListResource, error) {
+//func (c *RoochClient) ListResource(context context.Context, address string) (*ListResource, error) {
 //	result := &ListResource{
 //		Resources: make(map[string]Resource),
 //	}
 //	params := []string{address}
-//	err := this.Call(context, "state.list_resource", result, params)
+//	err := c.Call(context, "state.list_resource", result, params)
 //
 //	if err != nil {
 //		return nil, errors.Wrap(err, "call method state.list_resource ")
@@ -139,23 +147,23 @@ func (this *RoochClient) GetBlockByNumber(context context.Context, number int) (
 //	return result, nil
 //}
 
-//func (this *RoochClient) GetResource(context context.Context, address string, restype string, opt GetResourceOption, result interface{}) (interface{}, error) {
+//func (c *RoochClient) GetResource(context context.Context, address string, restype string, opt GetResourceOption, result interface{}) (interface{}, error) {
 //	params := []interface{}{address, restype, opt}
-//	err := this.Call(context, "state.get_resource", result, params)
+//	err := c.Call(context, "state.get_resource", result, params)
 //	if err != nil {
 //		return nil, errors.Wrap(err, "call method state.get_resource ")
 //	}
 //	return result, nil
 //}
 
-func (this *RoochClient) GetAccountSequenceNumber(context context.Context, address string) (uint64, error) {
-	//state, err := this.GetState(context, address)
+func (c *RoochClient) GetAccountSequenceNumber(context context.Context, address string) (uint64, error) {
+	//state, err := c.GetState(context, address)
 	restype := "0x00000000000000000000000000000001::Account::Account"
 	result := &RawResource{}
 	opt := GetResourceOption{
 		Decode: false,
 	}
-	r, err := this.GetResource(context, address, restype, opt, result)
+	r, err := c.GetResource(context, address, restype, opt, result)
 	if r == nil {
 		return 0, errors.New("get \"0x1::Account::Account\" resource return nil")
 	}
@@ -176,10 +184,10 @@ func (this *RoochClient) GetAccountSequenceNumber(context context.Context, addre
 	return accountResource.SequenceNumber, nil
 }
 
-//func (this *RoochClient) GetState(context context.Context, address string) (*types.AccountResource, error) {
+//func (c *RoochClient) GetState(context context.Context, address string) (*types.AccountResource, error) {
 //	var result []byte
 //	params := []string{address + "/1/0x00000000000000000000000000000001::Account::Account"}
-//	err := this.Call(context, "state.get", &result, params)
+//	err := c.Call(context, "state.get", &result, params)
 //
 //	if err != nil {
 //		return nil, errors.Wrap(err, "call method state.get ")
@@ -193,9 +201,10 @@ func (this *RoochClient) GetAccountSequenceNumber(context context.Context, addre
 //	return &accountResource, nil
 //}
 
-func (this *RoochClient) SubmitTransaction(context context.Context, signer Signer,
-	rawUserTransaction *transactions.Transaction) (string, error) {
-	signedUserTransaction, err := signTxn(privateKey, rawUserTransaction)
+func (c *RoochClient) SubmitTransaction(context context.Context, signer Signer,
+	transaction transactions.Transaction) (string, error) {
+
+	authenticator, err := signer.SignTransaction(transaction)
 	if err != nil {
 		return emptyString, errors.Wrap(err, "gen SignedUserTransaction failed")
 	}
@@ -207,7 +216,7 @@ func (this *RoochClient) SubmitTransaction(context context.Context, signer Signe
 
 	var result string
 	params := []string{hex.EncodeToString(signedUserTransactionBytes)}
-	err = this.Call(context, "txpool.submit_hex_transaction", &result, params)
+	err = c.Call(context, "txpool.submit_hex_transaction", &result, params)
 
 	if err != nil {
 		return emptyString, errors.Wrap(err, "call txpool.submit_hex_transaction ")
@@ -216,7 +225,7 @@ func (this *RoochClient) SubmitTransaction(context context.Context, signer Signe
 	return result, nil
 }
 
-func (this *RoochClient) SubmitSignedTransaction(context context.Context,
+func (c *RoochClient) SubmitSignedTransaction(context context.Context,
 	userTxn *types.SignedUserTransaction) (string, error) {
 	signedUserTransactionBytes, err := userTxn.BcsSerialize()
 	if err != nil {
@@ -225,7 +234,7 @@ func (this *RoochClient) SubmitSignedTransaction(context context.Context,
 
 	var result string
 	params := []string{hex.EncodeToString(signedUserTransactionBytes)}
-	err = this.Call(context, "txpool.submit_hex_transaction", &result, params)
+	err = c.Call(context, "txpool.submit_hex_transaction", &result, params)
 
 	if err != nil {
 		return emptyString, errors.Wrap(err, "call txpool.submit_hex_transaction ")
@@ -234,11 +243,11 @@ func (this *RoochClient) SubmitSignedTransaction(context context.Context,
 	return result, nil
 }
 
-func (this *RoochClient) SubmitSignedTransactionBytes(context context.Context,
+func (c *RoochClient) SubmitSignedTransactionBytes(context context.Context,
 	userTxn []byte) (string, error) {
 	var result string
 	params := []string{hex.EncodeToString(userTxn)}
-	err := this.Call(context, "txpool.submit_hex_transaction", &result, params)
+	err := c.Call(context, "txpool.submit_hex_transaction", &result, params)
 
 	if err != nil {
 		return emptyString, errors.Wrap(err, "call txpool.submit_hex_transaction ")
@@ -247,9 +256,9 @@ func (this *RoochClient) SubmitSignedTransactionBytes(context context.Context,
 	return result, nil
 }
 
-func (this *RoochClient) BuildRawUserTransaction(context context.Context, sender types.AccountAddress, payload transactions.TransactionPayload,
+func (c *RoochClient) BuildRawUserTransaction(context context.Context, sender types.AccountAddress, payload transactions.TransactionPayload,
 	gasPrice int, gasLimit uint64, seq uint64) (*types.RawUserTransaction, error) {
-	nodeInfo, err := this.GetNodeInfo(context)
+	nodeInfo, err := c.GetNodeInfo(context)
 	if err != nil {
 		return nil, errors.Wrap(err, "get node info failed ")
 	}
@@ -265,9 +274,9 @@ func (this *RoochClient) BuildRawUserTransaction(context context.Context, sender
 	}, nil
 }
 
-//func (this *RoochClient) GetGasUnitPrice(context context.Context) (int, error) {
+//func (c *RoochClient) GetGasUnitPrice(context context.Context) (int, error) {
 //	var result string
-//	err := this.Call(context, "txpool.gas_price", &result, nil)
+//	err := c.Call(context, "txpool.gas_price", &result, nil)
 //
 //	if err != nil {
 //		return 1, errors.Wrap(err, "call method txpool.gas_price ")
@@ -276,42 +285,42 @@ func (this *RoochClient) BuildRawUserTransaction(context context.Context, sender
 //	return strconv.Atoi(result)
 //}
 
-func (this *RoochClient) CallContract(context context.Context, call ContractCall) (interface{}, error) {
-	var result []interface{}
-	err := this.Call(context, "contract.call_v2", &result, []interface{}{call})
+//func (c *RoochClient) CallContract(context context.Context, call ContractCall) (interface{}, error) {
+//	var result []interface{}
+//	err := c.Call(context, "contract.call_v2", &result, []interface{}{call})
+//
+//	if err != nil {
+//		return 1, errors.Wrap(err, "call method contract.call_v2 ")
+//	}
+//
+//	return result, nil
+//}
 
-	if err != nil {
-		return 1, errors.Wrap(err, "call method contract.call_v2 ")
-	}
-
-	return result, nil
-}
-
-//func (this *RoochClient) EstimateGasByDryRunRaw(context context.Context, txn types.RawUserTransaction, publicKey types.Ed25519PublicKey) (*big.Int, error) {
-//	result, err := this.DryRunRaw(context, txn, publicKey)
+//func (c *RoochClient) EstimateGasByDryRunRaw(context context.Context, txn types.RawUserTransaction, publicKey types.Ed25519PublicKey) (*big.Int, error) {
+//	result, err := c.DryRunRaw(context, txn, publicKey)
 //	if err != nil {
 //		return nil, errors.Wrap(err, "call method DryRunRaw ")
 //	}
 //	return extractGasUsed(result)
 //}
 
-func (this *RoochClient) DryRunRaw(context context.Context, txn types.RawUserTransaction, publicKey types.Ed25519PublicKey) (*DryRunResult, error) {
+func (c *RoochClient) DryRunRaw(context context.Context, txn types.RawUserTransaction, publicKey types.Ed25519PublicKey) (*DryRunResult, error) {
 	var result DryRunResult
 	data, err := txn.BcsSerialize()
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-	err = this.Call(context, "contract.dry_run_raw", &result, []interface{}{BytesToHexString(data), BytesToHexString(publicKey)})
+	err = c.Call(context, "contract.dry_run_raw", &result, []interface{}{BytesToHexString(data), BytesToHexString(publicKey)})
 	if err != nil {
 		return nil, errors.Wrap(err, "call method contract.dry_run_raw ")
 	}
 	return &result, nil
 }
 
-func (this *RoochClient) EstimateGas(context context.Context, chainId int, gasUnitPrice int, maxGasAmount uint64,
+func (c *RoochClient) EstimateGas(context context.Context, chainID int, gasUnitPrice int, maxGasAmount uint64,
 	senderAddress string, publicKey types.Ed25519PublicKey, accountSeqNumber *uint64,
 	code string, typeArgs []string, args []string) (*big.Int, error) {
-	result, err := this.DryRun(context, chainId, gasUnitPrice, maxGasAmount, senderAddress, publicKey, accountSeqNumber, code, typeArgs, args)
+	result, err := c.DryRun(context, chainID, gasUnitPrice, maxGasAmount, senderAddress, publicKey, accountSeqNumber, code, typeArgs, args)
 	if err != nil {
 		return nil, errors.Wrap(err, "call method DryRun ")
 	}
@@ -327,12 +336,12 @@ func extractGasUsed(result *DryRunResult) (*big.Int, error) {
 	return i, nil
 }
 
-func (this *RoochClient) DryRun(context context.Context, chainId int, gasUnitPrice int, maxGasAmount uint64,
+func (c *RoochClient) DryRun(context context.Context, chainID int, gasUnitPrice int, maxGasAmount uint64,
 	senderAddress string, publicKey types.Ed25519PublicKey, accountSeqNumber *uint64,
 	code string, typeArgs []string, args []string) (*DryRunResult, error) {
 	var result DryRunResult
 	dryRunParam := DryRunParam{
-		ChainId:         chainId & 0xFF,
+		ChainId:         chainID & 0xFF,
 		GasUnitPrice:    gasUnitPrice,
 		Sender:          senderAddress,
 		SenderPublicKey: BytesToHexString(publicKey),
@@ -344,14 +353,14 @@ func (this *RoochClient) DryRun(context context.Context, chainId int, gasUnitPri
 			Args:     args,
 		},
 	}
-	err := this.Call(context, "contract.dry_run", &result, []interface{}{dryRunParam})
+	err := c.Call(context, "contract.dry_run", &result, []interface{}{dryRunParam})
 	if err != nil {
 		return nil, errors.Wrap(err, "call method contract.dry_run ")
 	}
 	return &result, nil
 }
 
-//func (this *RoochClient) DeployContract(context context.Context, sender types.AccountAddress, privateKey types.Ed25519PrivateKey,
+//func (c *RoochClient) DeployContract(context context.Context, sender types.AccountAddress, privateKey types.Ed25519PrivateKey,
 //	function types.ScriptFunction, code []byte) (string, error) {
 //	module := types.Module{
 //		Code: code,
@@ -365,21 +374,235 @@ func (this *RoochClient) DryRun(context context.Context, chainId int, gasUnitPri
 //		Value: pk,
 //	}
 //
-//	price, err := this.GetGasUnitPrice(context)
+//	price, err := c.GetGasUnitPrice(context)
 //	if err != nil {
 //		return "", errors.Wrap(err, "get gas unit price failed ")
 //	}
 //
-//	state, err := this.GetState(context, "0x"+hex.EncodeToString(sender[:]))
+//	state, err := c.GetState(context, "0x"+hex.EncodeToString(sender[:]))
 //
 //	if err != nil {
 //		return "", errors.Wrap(err, "call txpool.submit_hex_transaction ")
 //	}
 //
-//	rawTransactoin, err := this.BuildRawUserTransaction(context, sender, &packagePayload, price, DefaultMaxGasAmount, state.SequenceNumber)
+//	rawTransactoin, err := c.BuildRawUserTransaction(context, sender, &packagePayload, price, DefaultMaxGasAmount, state.SequenceNumber)
 //	if err != nil {
 //		return emptyString, errors.Wrap(err, "build raw user txn failed")
 //	}
 //
-//	return this.SubmitTransaction(context, privateKey, rawTransactoin)
+//	return c.SubmitTransaction(context, privateKey, rawTransactoin)
 //}
+
+// getRpcApiVersion gets RPC API version
+func (c *RoochClient) getRpcApiVersion() (string, error) {
+	var resp struct {
+		Info struct {
+			Version string `json:"version"`
+		} `json:"info"`
+	}
+	err := c.transport.request("rpc.discover", nil, &resp)
+	return resp.Info.Version, err
+
+	var result string
+	params := []string{hex.EncodeToString(userTxn)}
+	err := c.Call(context, "txpool.submit_hex_transaction", &result, params)
+
+	if err != nil {
+		return emptyString, errors.Wrap(err, "call txpool.submit_hex_transaction ")
+	}
+
+	return result, nil
+
+	if err != nil {
+		return errors.Wrap(err, fmt.Sprintf("call method %s err: ", serviceMethod))
+	}
+}
+
+// getChainId gets chain ID
+func (c *RoochClient) getChainId() (uint64, error) {
+	if c.chainID > 0 {
+		return c.chainID, nil
+	}
+
+	var result string
+	params := []string{hex.EncodeToString(userTxn)}
+	err := c.Call(context, "txpool.submit_hex_transaction", &result, params)
+
+	if err != nil {
+		return emptyString, errors.Wrap(err, "call txpool.submit_hex_transaction ")
+	}
+	var result string
+	err := c.client.request("rooch_getChainID", nil, &result)
+	if err != nil {
+		return nil, err
+	}
+
+	c.chainID = new(big.Int)
+	c.chainID.SetString(result, 10)
+	return c.chainID, nil
+}
+
+// executeViewFunction executes view function
+func (c *RoochClient) executeViewFunction(input CallFunctionArgs) (*AnnotatedFunctionResultView, error) {
+	callFunction := NewCallFunction(input)
+
+	params := map[string]interface{}{
+		"function_id": callFunction.functionId(),
+		"args":        callFunction.encodeArgs(),
+		"ty_args":     callFunction.typeArgs,
+	}
+
+	var result AnnotatedFunctionResultView
+	err := c.transport.request("rooch_executeViewFunction", []interface{}{params}, &result)
+	return &result, err
+}
+
+// signAndExecuteTransaction signs and executes transaction
+func (c *RoochClient) signAndExecuteTransaction(params struct {
+	Transaction interface{}
+	Signer      Signer
+	Option      *struct{ WithOutput bool }
+}) (*ExecuteTransactionResponseView, error) {
+	var transactionHex string
+
+	switch tx := params.Transaction.(type) {
+	case []byte:
+		transactionHex = str(HEX, tx)
+	case *Transaction:
+		sender := params.Signer.getRoochAddress().toHexAddress()
+
+		chainID, err := c.getChainId()
+		if err != nil {
+			return nil, err
+		}
+		tx.setChainId(chainID)
+
+		seqNum, err := c.getSequenceNumber(sender)
+		if err != nil {
+			return nil, err
+		}
+		tx.setSeqNumber(seqNum)
+		tx.setSender(sender)
+
+		auth, err := params.Signer.signTransaction(tx)
+		if err != nil {
+			return nil, err
+		}
+		tx.setAuth(auth)
+
+		encoded, err := tx.encode()
+		if err != nil {
+			return nil, err
+		}
+		transactionHex = "0x" + encoded.toHex()
+	default:
+		return nil, fmt.Errorf("unsupported transaction type")
+	}
+
+	var result ExecuteTransactionResponseView
+	err := c.transport.request("rooch_executeRawTransaction",
+		[]interface{}{transactionHex, params.Option}, &result)
+	return &result, err
+}
+
+// getStates gets states by access path
+func (c *RoochClient) getStates(params GetStatesParams) ([]ObjectStateView, error) {
+	var result []ObjectStateView
+	err := c.transport.request("rooch_getStates",
+		[]interface{}{params.AccessPath, params.StateOption}, &result)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(result) == 0 || result[0] == nil {
+		return []ObjectStateView{}, nil
+	}
+	return result, nil
+}
+
+// listStates lists states
+func (c *RoochClient) listStates(params ListStatesParams) (*PaginatedStateKVViews, error) {
+	var result PaginatedStateKVViews
+	err := c.transport.request("rooch_listStates",
+		[]interface{}{params.AccessPath, params.Cursor, params.Limit, params.StateOption}, &result)
+	return &result, err
+}
+
+// getModuleAbi gets module ABI
+func (c *RoochClient) getModuleAbi(params GetModuleABIParams) (*ModuleABIView, error) {
+	var result ModuleABIView
+	err := c.transport.request("rooch_getModuleABI",
+		[]interface{}{params.ModuleAddr, params.ModuleName}, &result)
+	return &result, err
+}
+
+// getEvents gets events by event handle
+func (c *RoochClient) getEvents(params GetEventsByEventHandleParams) (*PaginatedEventViews, error) {
+	var result PaginatedEventViews
+	err := c.transport.request("rooch_getEventsByEventHandle",
+		[]interface{}{
+			params.EventHandleType,
+			params.Cursor,
+			params.Limit,
+			params.DescendingOrder,
+			params.EventOptions,
+		}, &result)
+	return &result, err
+}
+
+// getBalance gets balance for coin type
+func (c *RoochClient) getBalance(params GetBalanceParams) (*BalanceInfoView, error) {
+	if !isValidRoochAddress(params.Owner) {
+		return nil, fmt.Errorf("invalid rooch address")
+	}
+
+	var result BalanceInfoView
+	err := c.transport.request("rooch_getBalance",
+		[]interface{}{params.Owner, params.CoinType}, &result)
+	return &result, err
+}
+
+// transfer transfers coins
+func (c *RoochClient) transfer(params struct {
+	Signer    Signer
+	Recipient string
+	Amount    *big.Int
+	CoinType  TypeArgs
+}) (*ExecuteTransactionResponseView, error) {
+	tx := NewTransaction()
+	tx.callFunction(CallFunctionArgs{
+		Target:   "0x3::transfer::transfer_coin",
+		Args:     []Args{Args.Address(params.Recipient), Args.U256(params.Amount)},
+		TypeArgs: []string{normalizeTypeArgsToStr(params.CoinType)},
+	})
+
+	return c.signAndExecuteTransaction(struct {
+		Transaction interface{}
+		Signer      Signer
+		Option      *struct{ WithOutput bool }
+	}{
+		Transaction: tx,
+		Signer:      params.Signer,
+	})
+}
+
+// Helper methods
+
+// getSequenceNumber gets sequence number for address
+func (c *RoochClient) getSequenceNumber(address string) (*big.Int, error) {
+	resp, err := c.executeViewFunction(CallFunctionArgs{
+		Target: "0x2::account::sequence_number",
+		Args:   []Args{Args.Address(address)},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if resp != nil && len(resp.ReturnValues) > 0 {
+		seqNum := new(big.Int)
+		seqNum.SetString(fmt.Sprint(resp.ReturnValues[0].DecodedValue), 10)
+		return seqNum, nil
+	}
+
+	return big.NewInt(0), nil
+}

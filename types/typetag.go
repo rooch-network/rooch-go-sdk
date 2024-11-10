@@ -1,6 +1,7 @@
 package types
 
 import (
+	"encoding/hex"
 	"fmt"
 	"github.com/rooch-network/rooch-go-sdk/bcs"
 	"strings"
@@ -40,6 +41,11 @@ type TypeTagImpl interface {
 //   - [bcs.Struct]
 type TypeTag struct {
 	Value TypeTagImpl
+}
+
+// String gives the canonical TypeTag string value used in Move
+func (tt *TypeTag) GetType() TypeTagVariant {
+	return tt.Value.GetType()
 }
 
 // String gives the canonical TypeTag string value used in Move
@@ -402,7 +408,7 @@ func (xt *StructTag) String() string {
 // 0x1::string::String or 0x42::my_mod::MultiType<u8,0x1::string::String>
 func (xt *StructTag) ToCanonicalString() string {
 	out := strings.Builder{}
-	out.WriteString(xt.Address.String())
+	out.WriteString(xt.Address.StringLong())
 	out.WriteString("::")
 	out.WriteString(xt.Module)
 	out.WriteString("::")
@@ -413,7 +419,14 @@ func (xt *StructTag) ToCanonicalString() string {
 			if i != 0 {
 				out.WriteRune(',')
 			}
-			out.WriteString(tp.String())
+			typetag_type := tp.Value.GetType()
+			if typetag_type == TypeTagStruct {
+				// Convert should not fail
+				structTag, _ := tp.Value.(*StructTag)
+				out.WriteString(structTag.ToCanonicalString())
+			} else {
+				out.WriteString(tp.String())
+			}
 		}
 		out.WriteRune('>')
 	}
@@ -441,25 +454,25 @@ func (xt *StructTag) UnmarshalBCS(des *bcs.Deserializer) {
 //return `0x${toHEX(sha3_256(Serializer.structTagToCanonicalString(input)))}`
 //}
 
-func (xt *StructTag) StructTagToObjectID() string {
-	out := strings.Builder{}
-	out.WriteString(xt.Address.String())
-	out.WriteString("::")
-	out.WriteString(xt.Module)
-	out.WriteString("::")
-	out.WriteString(xt.Name)
-	if len(xt.TypeParams) != 0 {
-		out.WriteRune('<')
-		for i, tp := range xt.TypeParams {
-			if i != 0 {
-				out.WriteRune(',')
-			}
-			out.WriteString(tp.String())
-		}
-		out.WriteRune('>')
-	}
-	return out.String()
-}
+//func (xt *StructTag) StructTagToObjectID() string {
+//	out := strings.Builder{}
+//	out.WriteString(xt.Address.String())
+//	out.WriteString("::")
+//	out.WriteString(xt.Module)
+//	out.WriteString("::")
+//	out.WriteString(xt.Name)
+//	if len(xt.TypeParams) != 0 {
+//		out.WriteRune('<')
+//		for i, tp := range xt.TypeParams {
+//			if i != 0 {
+//				out.WriteRune(',')
+//			}
+//			out.WriteString(tp.String())
+//		}
+//		out.WriteRune('>')
+//	}
+//	return out.String()
+//}
 
 //endregion
 //endregion
@@ -483,7 +496,7 @@ func NewVectorTag(inner TypeTagImpl) *VectorTag {
 // NewStringTag creates a TypeTag for 0x1::string::String
 func NewStringTag() *StructTag {
 	return &StructTag{
-		Address:    AccountOne,
+		Address:    AddressTwo,
 		Module:     "string",
 		Name:       "String",
 		TypeParams: []TypeTag{},
@@ -493,7 +506,7 @@ func NewStringTag() *StructTag {
 // NewOptionTag creates a 0x1::option::Option TypeTag based on an inner type
 func NewOptionTag(inner TypeTagImpl) *StructTag {
 	return &StructTag{
-		Address:    AccountOne,
+		Address:    AddressOne,
 		Module:     "option",
 		Name:       "Option",
 		TypeParams: []TypeTag{NewTypeTag(inner)},
@@ -503,7 +516,7 @@ func NewOptionTag(inner TypeTagImpl) *StructTag {
 // NewObjectTag creates a 0x1::object::Object TypeTag based on an inner type
 func NewObjectTag(inner TypeTagImpl) *StructTag {
 	return &StructTag{
-		Address:    AccountOne,
+		Address:    AddressTwo,
 		Module:     "object",
 		Name:       "Object",
 		TypeParams: []TypeTag{NewTypeTag(inner)},
@@ -512,9 +525,43 @@ func NewObjectTag(inner TypeTagImpl) *StructTag {
 
 // RGasTypeTag is the TypeTag for 0x1::gas_coin::RGas
 var RGasTypeTag = TypeTag{&StructTag{
-	Address: AccountOne,
+	Address: AddressThree,
 	Module:  "gas_coin",
 	Name:    "RGas",
 }}
+
+// TypeTagAsStructTag converts a TypeTag to StructTag
+func TypeTagAsStructTag(t *TypeTag) (*StructTag, error) {
+	// Check if the underlying type is StructTag
+	if t.Value.GetType() != TypeTagStruct {
+		return nil, fmt.Errorf("type tag is not a struct: %v", t.Value.GetType())
+	}
+
+	// Type assert to get the StructTag
+	structTag, ok := t.Value.(*StructTag)
+	if !ok {
+		return nil, fmt.Errorf("failed to convert type tag to struct tag")
+	}
+
+	return structTag, nil
+}
+
+// Convert StructTag to TypeTag
+func TypeTagFromStructTag(st *StructTag) *TypeTag {
+	return &TypeTag{
+		Value: st,
+	}
+}
+
+// structTagToObjectID converts a StructTag to an object ID
+func StructTagToObjectID(st *StructTag) (ObjectID, error) {
+	canonicalStr := st.ToCanonicalString()
+	//hash := sha3.New256()
+	//hash.Write([]byte(canonicalStr))
+	//return "0x" + hex.EncodeToString(hash.Sum(nil))
+	hash := Sha3256([]byte(canonicalStr))
+	address := "0x" + hex.EncodeToString(hash)
+	return ConvertObjectID(address)
+}
 
 //endregion

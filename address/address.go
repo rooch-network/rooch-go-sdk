@@ -38,20 +38,20 @@ const RoochAddressLength = 32
 //const DEFAULT_MAX_GAS_AMOUNT = 10000000
 //const GAS_TOKEN_CODE = "0x3::gas_coin::RGas"
 
-//// AccountZero is [RoochAddress] 0x0
-//var AccountZero = RoochAddress{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
-//
-//// AccountOne is [RoochAddress] 0x1
-//var AccountOne = RoochAddress{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}
-//
-//// AccountTwo is [RoochAddress] 0x2
-//var AccountTwo = RoochAddress{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2}
-//
-//// AccountThree is [RoochAddress] 0x3
-//var AccountThree = RoochAddress{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3}
-//
-//// AccountFour is [RoochAddress] 0x4
-//var AccountFour = RoochAddress{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4}
+// AddressZero is [RoochAddress] 0x0
+var AddressZero = RoochAddress{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+
+// AddressOne is [RoochAddress] 0x1
+var AddressOne = RoochAddress{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}
+
+// AddressTwo is [RoochAddress] 0x2
+var AddressTwo = RoochAddress{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2}
+
+// AddressThree is [RoochAddress] 0x3
+var AddressThree = RoochAddress{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3}
+
+// AddressFour is [RoochAddress] 0x4
+var AddressFour = RoochAddress{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4}
 
 // IsSpecial Returns whether the address is a "special" address. Addresses are considered
 // special if the first 63 characters of the hex string are zero. In other words,

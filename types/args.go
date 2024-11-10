@@ -20,7 +20,7 @@ const (
 	ArgTypeBool     ArgType = "bool"
 	ArgTypeString   ArgType = "string"
 	ArgTypeObject   ArgType = "object"
-	ArgTypeObjectID ArgType = "objectId"
+	ArgTypeObjectID ArgType = "ObjectID"
 	ArgTypeAddress  ArgType = "address"
 )
 
@@ -167,89 +167,105 @@ func ArgAddress(input interface{}) (*Args, error) {
 
 // Consistent with JS static object()
 func ArgObject(input StructTag) (*Args, error) {
-	objectID := Serializer{}.StructTagToObjectID(input)
-	return ObjectId(objectID)
-
-	return this.objectId(Serializer.structTagToObjectID(input))
-
-	bytes, err := bcs.SerializeU8(input)
+	objectID, err := StructTagToObjectID(&input)
 	if err != nil {
 		return nil, err
 	}
+	serializer := &bcs.Serializer{}
+	objectID.MarshalBCS(serializer)
+
+	bytes := serializer.ToBytes()
 	return NewArgs(bytes), nil
 }
 
-// Consistent with JS static objectId()
-func ArgObjectId(input string) (*Args, error) {
-	serialized := ObjectId{}.Serialize(input)
-	return NewArgs(serialized)
-
-	bytes, err := bcs.SerializeU8(input)
+// Consistent with JS static ObjectID()
+func ArgObjectID(input string) (*Args, error) {
+	objectID, err := ConvertObjectID(input)
 	if err != nil {
 		return nil, err
 	}
+
+	serializer := &bcs.Serializer{}
+	objectID.MarshalBCS(serializer)
+
+	bytes := serializer.ToBytes()
 	return NewArgs(bytes), nil
 }
 
 // Consistent with JS static struct()
 func ArgStruct(input interface{}) (*Args, error) {
-	var serialized []byte
+	var bytes []byte
 	switch v := input.(type) {
 	case []byte:
-		serialized = v
-	case BcsSerializable:
-		serialized = v.Serialize()
-	}
-	return NewArgs(serialized)
-
-	bytes, err := bcs.SerializeU8(input)
-	if err != nil {
-		return nil, err
+		bytes = v
+	case StructTag:
+		ser := &bcs.Serializer{}
+		struct_tag := input.(StructTag)
+		struct_tag.MarshalBCS(ser)
+		bytes = ser.ToBytes()
 	}
 	return NewArgs(bytes), nil
 }
 
 // Consistent with JS static vec()
 func ArgVec(argType ArgType, input interface{}) (*Args, error) {
-	s := bcs.NewSerializer()
+	ser := &bcs.Serializer{}
 
 	switch argType {
 	case ArgTypeU8:
-		s.SerializeVec(input.([]uint8))
+		bcs.SerializeSequence(input.([]uint8), ser)
+		//bcs.SerializeSequence(input.([]uint8))
 	case ArgTypeU16:
-		s.SerializeVec(input.([]uint16))
+		bcs.SerializeSequence(input.([]uint16), ser)
 	case ArgTypeU32:
-		s.SerializeVec(input.([]uint32))
+		bcs.SerializeSequence(input.([]uint32), ser)
 	case ArgTypeU64:
-		s.SerializeVec(input.([]uint64))
+		bcs.SerializeSequence(input.([]uint64), ser)
 	case ArgTypeU128:
-		s.SerializeVec(input.([][]byte))
+		bcs.SerializeSequence(input.([][]byte), ser)
 	case ArgTypeU256:
-		s.SerializeVec(input.([][]byte))
+		bcs.SerializeSequence(input.([][]byte), ser)
 	case ArgTypeBool:
-		s.SerializeVec(input.([]bool))
+		bcs.SerializeSequence(input.([]bool), ser)
 	case ArgTypeString:
-		s.SerializeVec(input.([]string))
+		bcs.SerializeSequence(input.([]string), ser)
 	case ArgTypeObject:
 		structTags := input.([]StructTag)
-		objectIDs := make([]string, len(structTags))
+		objectIDs := make([]ObjectID, len(structTags))
 		for i, tag := range structTags {
-			objectIDs[i] = Serializer{}.StructTagToObjectID(tag)
+			obj_id, err := StructTagToObjectID(&tag)
+			if err != nil {
+				return nil, err
+			}
+			objectIDs[i] = obj_id
 		}
-		s.SerializeVec(ObjectId{}.SerializeVec(objectIDs))
+		bcs.SerializeSequence(objectIDs, ser)
 	case ArgTypeObjectID:
-		s.SerializeVec(ObjectId{}.SerializeVec(input.([]string)))
+		ids := input.([]interface{})
+		objectIDs := make([]ObjectID, len(ids))
+		for i, id := range ids {
+			obj_id, err := ConvertObjectID(id)
+			if err != nil {
+				return nil, err
+			}
+			objectIDs[i] = obj_id
+		}
+		bcs.SerializeSequence(objectIDs, ser)
 	case ArgTypeAddress:
-		s.SerializeVec(Address{}.SerializeVec(input.([]string)))
+		//bcs.SerializeSequence(Address{}.SerializeVec(input.([]string)), ser)
+		ids := input.([]interface{})
+		addresses := make([]RoochAddress, len(ids))
+		for i, id := range ids {
+			address, err := address.ConvertToRoochAddress(id)
+			if err != nil {
+				return nil, err
+			}
+			addresses[i] = *address
+		}
+		bcs.SerializeSequence(addresses, ser)
 	}
 
-	return NewArgs(s.Bytes())
-
-	bytes, err := bcs.SerializeU8(input)
-	if err != nil {
-		return nil, err
-	}
-	return NewArgs(bytes), nil
+	return NewArgs(ser.ToBytes()), nil
 }
 
 //// Helper interfaces
