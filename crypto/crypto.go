@@ -53,7 +53,7 @@ type Signer interface {
 	SignTransaction(tx transactions.Transaction) (transactions.Authenticator, error)
 
 	// SimulationAuthenticator creates a new [AccountAuthenticator] for simulation purposes
-	//GetBitcoinAddress() *BitcoinAddress
+	GetBitcoinAddress() address.BitcoinAddress
 
 	// AuthKey gives the [AuthenticationKey] associated with the [Signer]
 	GetRoochAddress() address.RoochAddress

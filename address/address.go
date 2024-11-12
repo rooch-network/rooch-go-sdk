@@ -17,7 +17,7 @@ var (
 	ErrInvalidAddressLen  = errors.New("invalid address length")
 	ErrInvalidHexAddress  = errors.New("invalid hex address")
 	ErrInvalidBech32      = errors.New("invalid bech32 address")
-	ErrUnsupportedAddress = errors.New("unsupported address type")
+	ErrInvalidAddressType = errors.New("invalid address type")
 )
 
 // RoochAddress a 32-byte representation of an on-chain address
@@ -29,7 +29,11 @@ var (
 //   - [json.Unmarshaler]
 //
 // type RoochAddress H256
-type RoochAddress [32]byte
+// type RoochAddress [32]byte
+// RoochAddress implements the Address interface
+type RoochAddress struct {
+	address [32]byte
+}
 
 const RoochBech32Prefix = "rooch"
 
@@ -39,19 +43,19 @@ const RoochAddressLength = 32
 //const GAS_TOKEN_CODE = "0x3::gas_coin::RGas"
 
 // AddressZero is [RoochAddress] 0x0
-var AddressZero = RoochAddress{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+var AddressZero = RoochAddress{[32]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}}
 
 // AddressOne is [RoochAddress] 0x1
-var AddressOne = RoochAddress{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}
+var AddressOne = RoochAddress{[32]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}}
 
 // AddressTwo is [RoochAddress] 0x2
-var AddressTwo = RoochAddress{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2}
+var AddressTwo = RoochAddress{[32]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2}}
 
 // AddressThree is [RoochAddress] 0x3
-var AddressThree = RoochAddress{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3}
+var AddressThree = RoochAddress{[32]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3}}
 
 // AddressFour is [RoochAddress] 0x4
-var AddressFour = RoochAddress{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4}
+var AddressFour = RoochAddress{[32]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4}}
 
 // IsSpecial Returns whether the address is a "special" address. Addresses are considered
 // special if the first 63 characters of the hex string are zero. In other words,
@@ -61,12 +65,12 @@ var AddressFour = RoochAddress{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 // the addresses in the range from `0x0` to `0xf` (inclusive) are special.
 // For more details see the v1 address standard defined as part of AIP-40:
 func (ra *RoochAddress) IsSpecial() bool {
-	for _, b := range ra[:31] {
+	for _, b := range ra.address[:31] {
 		if b != 0 {
 			return false
 		}
 	}
-	return ra[31] < 0x10
+	return ra.address[31] < 0x10
 }
 
 // String Returns the canonical string representation of the [RoochAddress]
@@ -74,22 +78,22 @@ func (ra *RoochAddress) IsSpecial() bool {
 // Please use [RoochAddress.StringLong] for all indexer queries.
 func (ra *RoochAddress) String() string {
 	if ra.IsSpecial() {
-		return fmt.Sprintf("0x%x", ra[31])
+		return fmt.Sprintf("0x%x", ra.address[31])
 	} else {
 		//	return "0x" + hex.EncodeToString(a.Bytes())
-		return BytesToHex(ra[:])
+		return toHex(ra.address[:])
 	}
 }
 
 // FromAuthKey converts [crypto.AuthenticationKey] to [RoochAddress]
 func (ra *RoochAddress) FromAuthKey(authKey *crypto.AuthenticationKey) {
-	copy(ra[:], authKey[:])
+	copy(ra.address[:], authKey[:])
 }
 
 // AuthKey converts [RoochAddress] to [crypto.AuthenticationKey]
 func (ra *RoochAddress) AuthKey() *crypto.AuthenticationKey {
 	authKey := &crypto.AuthenticationKey{}
-	copy(authKey[:], ra[:])
+	copy(authKey[:], ra.address[:])
 	return authKey
 }
 
@@ -97,13 +101,13 @@ func (ra *RoochAddress) AuthKey() *crypto.AuthenticationKey {
 //
 // This is most commonly used for all indexer queries.
 func (ra *RoochAddress) StringLong() string {
-	return BytesToHex(ra[:])
+	return BytesToHex(ra.address[:])
 }
 
 // MarshalBCS Converts the RoochAddress to BCS encoded bytes
 func (ra *RoochAddress) MarshalBCS(ser *bcs.Serializer) {
-	//ser.FixedBytes(ra[:])
-	ser.WriteBytes(ra[:])
+	//ser.FixedBytes(ra.address[:])
+	ser.WriteBytes(ra.address[:])
 }
 
 // UnmarshalBCS Converts the RoochAddress from BCS encoded bytes
@@ -148,10 +152,10 @@ func (ra *RoochAddress) MarshalJSON() ([]byte, error) {
 //}
 
 // DerivedAddress addresses are derived by the address, the seed, then the type byte
-func (ra *RoochAddress) DerivedAddress(seed []byte, typeByte uint8) (accountAddress RoochAddress) {
+func (ra *RoochAddress) DerivedAddress(seed []byte, typeByte uint8) (roochAddress RoochAddress) {
 	authKey := ra.AuthKey()
 	authKey.FromBytesAndScheme(append(authKey[:], seed[:]...), typeByte)
-	copy(accountAddress[:], authKey[:])
+	copy(roochAddress.address[:], authKey[:])
 	return
 }
 
@@ -179,46 +183,77 @@ func (ra *RoochAddress) DerivedAddress(seed []byte, typeByte uint8) (accountAddr
 //	address string
 //}
 
-// NewRoochAddress creates a new RoochAddress from bytes
-func NewRoochAddress(bytes []byte) (*RoochAddress, error) {
+// // NewRoochAddress creates a new RoochAddress from bytes
+func NewRoochAddressFromBytes(bytes []byte) (*RoochAddress, error) {
 	if len(bytes) != RoochAddressLength {
 		return nil, ErrInvalidAddressLen
 	}
-	return (*RoochAddress)(bytes), nil
+	ra := RoochAddress{address: [32]byte(bytes)}
+	return &ra, nil
 }
 
-// NewRoochAddressFromString creates a RoochAddress from a string
-func NewRoochAddressFromString(address string) (*RoochAddress, error) {
-	// Try to decode as hex
-	if strings.HasPrefix(strings.ToLower(address), "0x") {
-		bytes, err := hex.DecodeString(address[2:])
-		if err != nil {
-			return nil, ErrInvalidHexAddress
+// NewRoochAddress creates a new RoochAddress from either a byte slice or string
+func NewRoochAddress(addr interface{}) (*RoochAddress, error) {
+	switch v := addr.(type) {
+	case string:
+		if isHex(v) {
+			// Handle hex string
+			v = NormalizeRoochAddress(v, true)
+			bytes, err := fromHex(v)
+			if err != nil {
+				return nil, err
+			}
+			return NewRoochAddressFromBytes(bytes)
 		}
-		return NewRoochAddress(bytes)
-	}
-
-	// Try to decode as bech32
-	if strings.HasPrefix(address, RoochBech32Prefix) {
-		_, data, err := bech32.Decode(address)
-		if err != nil {
-			return nil, ErrInvalidBech32
-		}
-		converted, err := bech32.ConvertBits(data, 5, 8, true)
+		// Handle bech32 string
+		_, data, err := bech32.Decode(v)
 		if err != nil {
 			return nil, err
 		}
-		return NewRoochAddress(converted)
+		converted, err := bech32.ConvertBits(data, 5, 8, false)
+		if err != nil {
+			return nil, err
+		}
+		return NewRoochAddressFromBytes(converted)
+	case []byte:
+		return NewRoochAddressFromBytes(v)
+	default:
+		return nil, ErrInvalidAddressType
 	}
-
-	//// Try to convert from Bitcoin address
-	//btcAddr, err := NewBitcoinAddress(address)
-	//if err == nil {
-	//	return btcAddr.ToRoochAddress()
-	//}
-
-	return nil, ErrInvalidAddress
 }
+
+//// NewRoochAddressFromString creates a RoochAddress from a string
+//func NewRoochAddressFromString(address string) (*RoochAddress, error) {
+//	// Try to decode as hex
+//	if strings.HasPrefix(strings.ToLower(address), "0x") {
+//		bytes, err := hex.DecodeString(address[2:])
+//		if err != nil {
+//			return nil, ErrInvalidHexAddress
+//		}
+//		return NewRoochAddress(bytes)
+//	}
+//
+//	// Try to decode as bech32
+//	if strings.HasPrefix(address, RoochBech32Prefix) {
+//		_, data, err := bech32.Decode(address)
+//		if err != nil {
+//			return nil, ErrInvalidBech32
+//		}
+//		converted, err := bech32.ConvertBits(data, 5, 8, true)
+//		if err != nil {
+//			return nil, err
+//		}
+//		return NewRoochAddress(converted)
+//	}
+//
+//	//// Try to convert from Bitcoin address
+//	//btcAddr, err := NewBitcoinAddress(address)
+//	//if err == nil {
+//	//	return btcAddr.ToRoochAddress()
+//	//}
+//
+//	return nil, ErrInvalidAddress
+//}
 
 //// String returns the hex representation of the address
 //func (a *RoochAddress) String() string {
@@ -226,14 +261,14 @@ func NewRoochAddressFromString(address string) (*RoochAddress, error) {
 //}
 
 // Bytes returns the raw bytes of the address
-func (a *RoochAddress) Bytes() []byte {
+func (ra *RoochAddress) Bytes() []byte {
 	//return ([]byte)(a)
-	return a[:]
+	return ra.address[:]
 }
 
 // ToBech32 converts the address to bech32 format
-func (a *RoochAddress) ToBech32() (string, error) {
-	converted, err := bech32.ConvertBits(a.Bytes(), 8, 5, true)
+func (ra *RoochAddress) ToBech32() (string, error) {
+	converted, err := bech32.ConvertBits(ra.Bytes(), 8, 5, true)
 	if err != nil {
 		return "", err
 	}
@@ -317,22 +352,31 @@ func ToCanonicalRoochAddress(input string, forceAdd0x bool) string {
 
 // IsValidRoochAddress checks if the given address is a valid Rooch address
 func IsValidRoochAddress(address string) bool {
-	_, err := NewRoochAddressFromString(address)
+	_, err := NewRoochAddress(address)
 	return err == nil
 }
 
-// ConvertToRoochAddress converts various input formats to a RoochAddress
-func ConvertToRoochAddress(input interface{}) (*RoochAddress, error) {
-	switch v := input.(type) {
-	case string:
-		return NewRoochAddressFromString(v)
-	case []byte:
-		return NewRoochAddress(v)
-	case RoochAddress:
-		return NewRoochAddress(v.Bytes())
-	default:
-		return nil, ErrUnsupportedAddress
-	}
+//// ConvertToRoochAddress converts various input formats to a RoochAddress
+//func ConvertToRoochAddress(input interface{}) (*RoochAddress, error) {
+//	switch v := input.(type) {
+//	case string:
+//		return NewRoochAddressFromString(v)
+//	case []byte:
+//		return NewRoochAddress(v)
+//	case RoochAddress:
+//		return NewRoochAddress(v.Bytes())
+//	default:
+//		return nil, ErrInvalidAddressType
+//	}
+//}
+
+func fromHex(s string) ([]byte, error) {
+	s = strings.TrimPrefix(strings.ToLower(s), "0x")
+	return hex.DecodeString(s)
+}
+
+func toHex(b []byte) string {
+	return "0x" + hex.EncodeToString(b)
 }
 
 // Utility functions for testing

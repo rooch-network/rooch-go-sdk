@@ -66,7 +66,7 @@ func (txn *SignedTransaction) Hash() (string, error) {
 	// Then followed by the type of the transaction for the enum, UserTransaction is 0
 	// Then followed by BCS encoded bytes of the signed transaction
 	hashBytes := types.Sha3256Hash([][]byte{*TransactionPrefix, {byte(UserTransactionVariant)}, txnBytes})
-	return types.BytesToHex(hashBytes), nil
+	return []byteToHex(hashBytes), nil
 }
 
 //region SignedTransaction bcs.Struct

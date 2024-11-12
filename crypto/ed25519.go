@@ -381,14 +381,14 @@ func (key *Ed25519PublicKey) UnmarshalBCS(des *bcs.Deserializer) {
 //return new RoochAddress(blake2b(tmp, { dkLen: 32 }).slice(0, ROOCH_ADDRESS_LENGTH * 2))
 //}
 
-func (key Ed25519PublicKey) ToRoochAddress() address.RoochAddress {
+func (key Ed25519PublicKey) ToRoochAddress() (*address.RoochAddress, error) {
 	var tmp []byte
 	tmp = append(tmp, GetSignatureFlag(Ed25519Scheme))
 	tmp = append(tmp, key.Bytes()[:]...)
 	//// Each hex char represents half a byte, hence hex address doubles the length
 	//return new RoochAddress(blake2b(tmp, { dkLen: 32 }).slice(0, ROOCH_ADDRESS_LENGTH * 2))
 	addressBytes := types.Blake2b256(tmp)[:address.RoochAddressLength*2]
-	return address.RoochAddress(addressBytes)
+	return address.NewRoochAddressFromBytes(addressBytes)
 }
 
 //endregion
