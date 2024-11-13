@@ -4,12 +4,13 @@ import (
 	"crypto/ed25519"
 	"encoding/base64"
 	"errors"
-	"github.com/rooch-network/rooch-go-sdk/rooch-sdk/address"
-	"github.com/rooch-network/rooch-go-sdk/rooch-sdk/crypto"
-	"github.com/rooch-network/rooch-go-sdk/rooch-sdk/utils"
+	"github.com/rooch-network/rooch-go-sdk/address"
+	"github.com/rooch-network/rooch-go-sdk/bcs"
+	"github.com/rooch-network/rooch-go-sdk/crypto"
+	"github.com/rooch-network/rooch-go-sdk/utils"
 )
 
-const PUBLIC_KEY_SIZE = 32
+const PublicKeySize = 32
 
 // Ed25519PublicKey represents an Ed25519 public key
 type Ed25519PublicKey struct {
@@ -34,7 +35,7 @@ func NewEd25519PublicKey(value interface{}) (*Ed25519PublicKey, error) {
 		return nil, errors.New("invalid public key input type")
 	}
 
-	if len(data) != PUBLIC_KEY_SIZE {
+	if len(data) != PublicKeySize {
 		return nil, errors.New("invalid public key size")
 	}
 
@@ -44,11 +45,11 @@ func NewEd25519PublicKey(value interface{}) (*Ed25519PublicKey, error) {
 }
 
 // Equals checks if two Ed25519 public keys are equal
-func (pk *Ed25519PublicKey) Equals(other *Ed25519PublicKey) bool {
+func (pk *Ed25519PublicKey) Equals(other crypto.PublicKey[address.RoochAddress]) bool {
 	if pk == nil || other == nil {
 		return false
 	}
-	return crypto.BytesEqual(pk.data, other.data)
+	return utils.BytesEqual(pk.data, other.ToBytes())
 }
 
 // ToBytes returns the byte array representation of the Ed25519 public key
@@ -58,21 +59,86 @@ func (pk *Ed25519PublicKey) ToBytes() []byte {
 
 // Flag returns the signature scheme flag for Ed25519
 func (pk *Ed25519PublicKey) Flag() uint8 {
-	return crypto.ED25519_FLAG
+	return uint8(crypto.Ed25519Flag)
 }
 
 // Verify verifies that the signature is valid for the provided message
-func (pk *Ed25519PublicKey) Verify(message, signature []byte) bool {
-	return ed25519.Verify(pk.data, message, signature)
+func (pk *Ed25519PublicKey) Verify(message, signature []byte) (bool, error) {
+	return ed25519.Verify(pk.data, message, signature), nil
 }
 
 // ToAddress returns the Rooch address associated with this Ed25519 public key
-func (pk *Ed25519PublicKey) ToAddress() *address.RoochAddress {
-	tmp := make([]byte, PUBLIC_KEY_SIZE+1)
-	tmp[0] = crypto.ED25519_FLAG
-	copy(tmp[1:], pk.data)
+func (pk *Ed25519PublicKey) ToAddress() (*address.RoochAddress, error) {
+	tmp := make([]byte, PublicKeySize+1)
+	tmp[0] = byte(crypto.SignatureSchemeSize[crypto.Ed25519Scheme])
+	//tmp.set([SIGNATURE_SCHEME_TO_FLAG.ED25519])
+	//copy(tmp[1:], pk.data)
+	copy(tmp[1:], pk.ToBytes())
 
-	hash := utils.Blake2b(tmp, 32)
-	addressBytes := hash[:address.ROOCH_ADDRESS_LENGTH*2]
-	return address.NewRoochAddress(addressBytes)
+	//hash := utils.Blake2b(tmp, 32)
+	//addressBytes := hash[:address.ROOCH_ADDRESS_LENGTH*2]
+	//return address.NewRoochAddress(addressBytes)
+
+	addressBytes := utils.Blake2b256(tmp)[:address.RoochAddressLength*2]
+	return address.NewRoochAddressFromBytes(addressBytes)
+}
+
+func (pk *Ed25519PublicKey) ToBase64() string {
+	return utils.ToB64(pk.ToBytes())
+}
+
+func (pk *Ed25519PublicKey) ToHex() string {
+	return address.BytesToHex(pk.ToBytes())
+}
+
+// // FromHex sets the [Ed25519PublicKey] to the bytes represented by the hex string, with or without a leading 0x
+// //
+// // Errors if the hex string is not valid, or if the bytes length is not [ed25519.PublicKeySize].
+// //
+// // Implements:
+// //   - [CryptoMaterial]
+func (pk *Ed25519PublicKey) FromHex(hexStr string) (err error) {
+	bytes, err := address.ParseHex(hexStr)
+	if err != nil {
+		return err
+	}
+	return pk.FromBytes(bytes)
+}
+
+func (pk *Ed25519PublicKey) FromBytes(bytes []byte) (err error) {
+	if len(bytes) != ed25519.PublicKeySize {
+		return errors.New("invalid ed25519 public key size")
+	}
+	pk.data = bytes
+	return nil
+}
+
+//endregion
+
+//region Ed25519PublicKey bcs.Struct implementation
+
+// MarshalBCS serializes the [Ed25519PublicKey] to BCS bytes
+//
+// Implements:
+//   - [bcs.Marshaler]
+func (pk *Ed25519PublicKey) MarshalBCS(ser *bcs.Serializer) {
+	ser.WriteBytes(pk.data)
+}
+
+// UnmarshalBCS deserializes the [Ed25519PublicKey] from BCS bytes
+//
+// Sets [bcs.Deserializer.Error] if the bytes length is not [ed25519.PublicKeySize], or if it fails to read the required bytes.
+//
+// Implements:
+//   - [bcs.Unmarshaler]
+func (pk *Ed25519PublicKey) UnmarshalBCS(des *bcs.Deserializer) {
+	kb := des.ReadBytes()
+	if des.Error() != nil {
+		return
+	}
+	err := pk.FromBytes(kb)
+	if err != nil {
+		des.SetError(err)
+		return
+	}
 }

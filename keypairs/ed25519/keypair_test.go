@@ -1,7 +1,8 @@
 package ed25519
 
 import (
-	"encoding/base64"
+	"github.com/rooch-network/rooch-go-sdk/crypto"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -19,33 +20,33 @@ var testCases = []struct {
 
 func TestEd25519Keypair(t *testing.T) {
 	t.Run("create ed25519 keypair", func(t *testing.T) {
-		kp := GenerateEd25519Keypair()
+		kp, _ := GenerateEd25519Keypair()
 		assert.Equal(t, 32, len(kp.GetPublicKey().ToBytes()))
 	})
 
 	t.Run("export ed25519 keypair", func(t *testing.T) {
-		kp := GenerateEd25519Keypair()
-		secret := kp.GetSecretKey()
-		assert.True(t, strings.HasPrefix(secret, ROOCH_SECRET_KEY_PREFIX))
+		kp, _ := GenerateEd25519Keypair()
+		secret, _ := kp.GetSecretKey()
+		assert.True(t, strings.HasPrefix(secret, crypto.RoochSecretKeyPrefix))
 	})
 
 	t.Run("Create ed25519 keypair from secret key", func(t *testing.T) {
 		// valid secret key is provided by rooch keystore
 		testCase := testCases[0]
-		
-		key, err := DecodeRoochSecretKey(testCase.sk)
+
+		key, err := crypto.DecodeRoochSecretKey(testCase.sk)
 		assert.NoError(t, err)
-		
-		keypair := Ed25519KeypairFromSecretKey(key.SecretKey)
+
+		keypair, _ := FromEd25519SecretKey(key.SecretKey, true)
 		assert.Equal(t, testCase.pk, keypair.GetPublicKey().ToBase64())
 
-		keypair1 := Ed25519KeypairFromSecretKey(testCase.sk)
+		keypair1, _ := FromEd25519SecretKey([]byte(testCase.sk), true)
 		assert.Equal(t, testCase.pk, keypair1.GetPublicKey().ToBase64())
 	})
 
 	t.Run("Invalid mnemonics to derive ed25519 keypair", func(t *testing.T) {
 		assert.Panics(t, func() {
-			DeriveEd25519Keypair("rooch")
+			DeriveEd25519Keypair("rooch", "")
 		}, "Invalid mnemonic")
 	})
 
@@ -55,12 +56,12 @@ func TestEd25519Keypair(t *testing.T) {
 	})
 
 	t.Run("Sign data", func(t *testing.T) {
-		keypair := NewEd25519Keypair()
+		keypair, _ := GenerateEd25519Keypair()
 		message := []byte("hello rooch")
 		signature, err := keypair.Sign(message)
 		assert.NoError(t, err)
-		
-		isValid := keypair.GetPublicKey().Verify(message, signature)
+
+		isValid, _ := keypair.GetPublicKey().Verify(message, signature)
 		assert.True(t, isValid)
 	})
 
@@ -68,4 +69,4 @@ func TestEd25519Keypair(t *testing.T) {
 		// TODO: Implement CLI signature verification
 		t.Skip("Not implemented yet")
 	})
-} 
+}

@@ -6,11 +6,14 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"github.com/cosmos/go-bip39"
+	"github.com/rooch-network/rooch-go-sdk/address"
 	"strings"
 
 	"github.com/tyler-smith/go-bip32"
 	"github.com/tyler-smith/go-bip39"
+
+	"github.com/rooch-network/rooch-go-sdk/crypto"
+	"github.com/rooch-network/rooch-go-sdk/transactions"
 )
 
 const (
@@ -47,17 +50,17 @@ func NewEd25519Keypair(keypair *Ed25519KeypairData) (*Ed25519Keypair, error) {
 }
 
 // GetKeyScheme returns the key scheme of the keypair
-func (k *Ed25519Keypair) GetKeyScheme() string {
-	return "ED25519"
+func (k *Ed25519Keypair) GetKeyScheme() crypto.SignatureScheme {
+	return crypto.Ed25519Scheme
 }
 
 // Generate generates a new random Ed25519 keypair
-func Generate() (*Ed25519Keypair, error) {
+func GenerateEd25519Keypair() (*Ed25519Keypair, error) {
 	return NewEd25519Keypair(nil)
 }
 
 // FromSecretKey creates an Ed25519 keypair from a raw secret key byte array
-func FromSecretKey(secretKey []byte, skipValidation bool) (*Ed25519Keypair, error) {
+func FromEd25519SecretKey(secretKey []byte, skipValidation bool) (*Ed25519Keypair, error) {
 	if len(secretKey) != PrivateKeySize {
 		return nil, fmt.Errorf("wrong secretKey size. Expected %d bytes, got %d", PrivateKeySize, len(secretKey))
 	}
@@ -81,14 +84,36 @@ func FromSecretKey(secretKey []byte, skipValidation bool) (*Ed25519Keypair, erro
 	return NewEd25519Keypair(keypair)
 }
 
-// GetPublicKey returns the public key for this Ed25519 keypair
-func (k *Ed25519Keypair) GetPublicKey() []byte {
-	return k.keypair.PublicKey
+// GetBitcoinAddress returns the Bitcoin address (not implemented for Ed25519)
+func (k *Ed25519Keypair) GetBitcoinAddress() (*address.BitcoinAddress, error) {
+	return nil, errors.New("method not implemented in Ed25519")
 }
 
-// GetSecretKey returns the secret key for this Ed25519 keypair
-func (k *Ed25519Keypair) GetSecretKey() []byte {
-	return k.keypair.SecretKey[:PrivateKeySize]
+// GetRoochAddress returns the Rooch address
+func (k *Ed25519Keypair) GetRoochAddress() (*address.RoochAddress, error) {
+	return k.GetPublicKey().ToAddress()
+}
+
+// // GetPublicKey returns the public key for this Ed25519 keypair
+//
+//	func (k *Ed25519Keypair) GetPublicKey() []byte {
+//		return k.keypair.PublicKey
+//	}
+//
+// GetPublicKey returns the public key for this Ed25519 keypair
+func (k *Ed25519Keypair) GetPublicKey() crypto.PublicKey[address.RoochAddress] {
+	//return k.keypair.PublicKey
+	return &Ed25519PublicKey{k.keypair.PublicKey}
+}
+
+// The Bech32 secret key string for this Ed25519 keypair
+func (k *Ed25519Keypair) GetSecretKey() (string, error) {
+	//return k.keypair.SecretKey[:PrivateKeySize]
+
+	return crypto.EncodeRoochSecretKey(
+		k.keypair.SecretKey[:PrivateKeySize],
+		k.GetKeyScheme(),
+	)
 }
 
 // Sign returns the signature for the provided data using Ed25519
@@ -96,8 +121,18 @@ func (k *Ed25519Keypair) Sign(input []byte) ([]byte, error) {
 	return ed25519.Sign(k.keypair.SecretKey, input), nil
 }
 
+// SignTransaction signs a transaction and returns an authenticator
+func (k *Ed25519Keypair) SignTransaction(tx *transactions.Transaction) (*crypto.Authenticator, error) {
+	//return AuthenticatorRooch(tx.HashData(), k)
+	hash, err := tx.HashData()
+	if err != nil {
+		return nil, err
+	}
+	return crypto.RoochAuthValidator(hash, k)
+}
+
 // DeriveKeypair derives Ed25519 keypair from mnemonics and path
-func DeriveKeypair(mnemonics string, path string) (*Ed25519Keypair, error) {
+func DeriveEd25519Keypair(mnemonics string, path string) (*Ed25519Keypair, error) {
 	if path == "" {
 		path = DefaultEd25519DerivationPath
 	}
@@ -107,11 +142,11 @@ func DeriveKeypair(mnemonics string, path string) (*Ed25519Keypair, error) {
 	}
 
 	seed := bip39.NewSeed(mnemonics, "")
-	return deriveKeypairFromSeed(hex.EncodeToString(seed), path)
+	return deriveEd25519KeypairFromSeed(hex.EncodeToString(seed), path)
 }
 
 // DeriveKeypairFromSeed derives Ed25519 keypair from seed and path
-func DeriveKeypairFromSeed(seedHex string, path string) (*Ed25519Keypair, error) {
+func DeriveEd25519KeypairFromSeed(seedHex string, path string) (*Ed25519Keypair, error) {
 	if path == "" {
 		path = DefaultEd25519DerivationPath
 	}
@@ -120,12 +155,12 @@ func DeriveKeypairFromSeed(seedHex string, path string) (*Ed25519Keypair, error)
 		return nil, errors.New("invalid derivation path")
 	}
 
-	return deriveKeypairFromSeed(seedHex, path)
+	return deriveEd25519KeypairFromSeed(seedHex, path)
 }
 
 // Helper functions
 
-func deriveKeypairFromSeed(seedHex string, path string) (*Ed25519Keypair, error) {
+func deriveEd25519KeypairFromSeed(seedHex string, path string) (*Ed25519Keypair, error) {
 	seed, err := hex.DecodeString(seedHex)
 	if err != nil {
 		return nil, err
@@ -167,7 +202,7 @@ func deriveKeypairFromSeed(seedHex string, path string) (*Ed25519Keypair, error)
 		}
 	}
 
-	return FromSecretKey(currentKey.Key, false)
+	return FromEd25519SecretKey(currentKey.Key, false)
 }
 
 func isValidHardenedPath(path string) bool {

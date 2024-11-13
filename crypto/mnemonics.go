@@ -5,6 +5,7 @@ package crypto
 
 import (
 	"encoding/hex"
+	"github.com/tyler-smith/go-bip39"
 	"regexp"
 )
 

@@ -2,6 +2,7 @@ package crypto
 
 import (
 	"errors"
+	"fmt"
 	"github.com/btcsuite/btcd/btcutil/bech32"
 )
 
@@ -55,9 +56,10 @@ func DecodeRoochSecretKey(value string) (*ParsedKeypair, error) {
 	secretKey := extendedSecretKey[1:]
 
 	// Get signature scheme from flag
-	scheme, ok := SignatureFlagToScheme[flag]
-	if !ok {
-		return nil, errors.New("invalid signature scheme flag")
+	scheme, ok := SignatureFlagToScheme[SignatureFlag(flag)]
+	if ok != true {
+		return nil, errors.New(
+			fmt.Sprintf("invalid signature flag 0x%x", flag))
 	}
 
 	return &ParsedKeypair{
@@ -73,13 +75,14 @@ func EncodeRoochSecretKey(bytes []byte, scheme SignatureScheme) (string, error) 
 	}
 
 	flag, ok := SignatureSchemeToFlag[scheme]
-	if !ok {
-		return "", errors.New("invalid signature scheme")
+	if ok != true {
+		return "", errors.New(
+			fmt.Sprintf("invalid signature scheme %d", scheme))
 	}
 
 	// Combine flag and private key bytes
 	privKeyBytes := make([]byte, len(bytes)+1)
-	privKeyBytes[0] = flag
+	privKeyBytes[0] = byte(flag)
 	copy(privKeyBytes[1:], bytes)
 
 	// Encode the combined bytes to Bech32

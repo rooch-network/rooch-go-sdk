@@ -5,8 +5,8 @@ import (
 	"encoding/hex"
 	"errors"
 	"github.com/rooch-network/rooch-go-sdk/bcs"
-	"github.com/rooch-network/rooch-go-sdk/utils"
 	"github.com/rooch-network/rooch-go-sdk/transactions"
+	"github.com/rooch-network/rooch-go-sdk/utils"
 	"strings"
 )
 
@@ -135,13 +135,13 @@ func RoochAuthValidator(input []byte, signer Signer) (*Authenticator, error) {
 		return nil, err
 	}
 	//pubKeyBytes := signer.getPublicKey().toBytes()
-	pubKeyBytes := signer.GetPublicKey().Bytes()
+	pubKeyBytes := signer.GetPublicKey().ToBytes()
 	//serializedSignatureLen := 1 + len(signature.Bytes()) + len(pubKeyBytes)
 	//serializedSignature := [serializedSignatureLen]byte{}
 	//serializedSignature := make([]byte, 1 + len(signature.Bytes()) + len(pubKeyBytes))
 	var serializedSignature []byte
-	serializedSignature = append(serializedSignature, GetSignatureFlag(signer.GetKeyScheme()))
-	serializedSignature = append(serializedSignature, signature.Bytes()[:]...)
+	serializedSignature = append(serializedSignature, byte(SignatureSchemeToFlag[signer.GetKeyScheme()]))
+	serializedSignature = append(serializedSignature, signature[:]...)
 	serializedSignature = append(serializedSignature, pubKeyBytes[:]...)
 	//serializedSignature.set([SIGNATURE_SCHEME_TO_FLAG[signer.getKeyScheme()]])
 	//serializedSignature.set(signature, 1)
@@ -169,20 +169,27 @@ func BitcoinAuthValidator(input *BitcoinSignMessage, signer Signer, signWith str
 	if err != nil {
 		return nil, err
 	}
+	bitcoin_address, err := signer.GetBitcoinAddress()
+	if err != nil {
+		return nil, err
+	}
 
-	payload := transactions.BitcoinAuthPayload{
-		Signature: signature.Bytes(),
+	bitcoin_payload := transactions.BitcoinAuthPayload{
+		Signature: signature,
 		MessagePrefix: bytes.Join([][]byte{
 			[]byte(input.messagePrefix),
 			utils.VarintByteNum(uint64(messageLength)),
 		}, []byte{}),
 		MessageInfo: input.messageInfo,
-		PublicKey:   signer.GetPublicKey().Bytes(),
-		FromAddress: []byte(signer.GetBitcoinAddress().ToStr()),
+		PublicKey:   signer.GetPublicKey().ToBytes(),
+		FromAddress: bitcoin_address.ToBytes(),
 	}
-	payload :=
+	payload, err := bcs.Serialize(&bitcoin_payload)
+	if err != nil {
+		return nil, err
+	}
 
-//return NewAuthenticator(int(BITCOIN), payload), nil
+	//return NewAuthenticator(int(BITCOIN), payload), nil
 	return &Authenticator{
 		uint64(AuthValidatorTypeBitcoin), payload}, nil
 }

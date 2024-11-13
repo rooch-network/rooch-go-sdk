@@ -2,6 +2,7 @@ package transactions
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/rooch-network/rooch-go-sdk/crypto"
 	"github.com/rooch-network/rooch-go-sdk/types"
@@ -60,9 +61,9 @@ const sendPrefix = "0000000000000000"
 type Authenticator = crypto.Authenticator
 
 type Transaction struct {
-	Data          RoochTransactionData `json:"data"`
-	Authenticator Authenticator        `json:"authenticator"`
-	Info          string               `json:"info"`
+	Data          TransactionData `json:"data"`
+	Authenticator Authenticator   `json:"authenticator"`
+	Info          string          `json:"info"`
 }
 
 func (t *Transaction) MarshalBCS(ser *bcs.Serializer) {
@@ -75,6 +76,56 @@ func (t *Transaction) UnmarshalBCS(des *bcs.Deserializer) {
 	t.Authenticator.UnmarshalBCS(des)
 	t.Info = des.ReadString()
 }
+
+//// CallFunction initializes the transaction with function call data
+//func (t *Transaction) CallFunction(input CallFunctionInput) {
+//	t.info = &input.Info
+//	t.data = NewTransactionData(MoveAction.NewCallFunction(input.CallFunctionArgs))
+//}
+
+// GetInfo returns the transaction info
+func (t *Transaction) GetInfo() *string {
+	return &t.Info
+}
+
+//// SetSender sets the sender address for the transaction
+//func (t *Transaction) SetSender(input types.Address) {
+//	t.getData().Sender = input
+//}
+//
+//// SetAuth sets the authenticator for the transaction
+//func (t *Transaction) SetAuth(input *crypto.Authenticator) {
+//	t.auth = input
+//}
+//
+//// SetChainId sets the chain ID for the transaction
+//func (t *Transaction) SetChainId(input types.U64) {
+//	t.getData().ChainId = input
+//}
+//
+//// SetSeqNumber sets the sequence number for the transaction
+//func (t *Transaction) SetSeqNumber(input types.U64) {
+//	t.getData().SequenceNumber = input
+//}
+
+// HashData returns the hash of the transaction data
+func (t *Transaction) HashData() ([]byte, error) {
+	return t.getData().Hash()
+}
+
+// getData returns the transaction data after validation
+func (t *Transaction) getData() *TransactionData {
+	//t.isValid()
+	return &t.Data
+}
+
+//// isValid checks if the transaction data is initialized
+//func (t *Transaction) isValid() error {
+//	if t.Data == TransactionData{} {
+//		return errors.New("Transaction data is not initialized. Call action first")
+//	}
+//	return nil
+//}
 
 type TransactionSequenceInfo struct {
 	TxOrder                         uint64   `json:"tx_order"`
@@ -444,7 +495,7 @@ func (fc *FunctionCall) UnmarshalBCS(des *bcs.Deserializer) {
 //ModuleBundle(Vec<Vec<u8>>),
 //}
 
-//pub struct RoochTransactionData {
+//pub struct TransactionData {
 ///// Sender's address.
 //pub sender: RoochAddress,
 //// Sequence number of this transaction corresponding to sender's account.
@@ -457,7 +508,7 @@ func (fc *FunctionCall) UnmarshalBCS(des *bcs.Deserializer) {
 //pub action: MoveAction,
 //}
 
-type RoochTransactionData struct {
+type TransactionData struct {
 	Sender         types.RoochAddress `json:"sender"`
 	SequenceNumber uint64             `json:"sequence_number"`
 	ChainId        uint64             `json:"chain_id"`
@@ -472,33 +523,32 @@ type RoochTransactionData struct {
 	//Status json.RawMessage `json:"status"`
 }
 
-func (rtd *RoochTransactionData) MarshalBCS(ser *bcs.Serializer) {
-	rtd.Sender.MarshalBCS(ser)
-	ser.U64(rtd.SequenceNumber)
-	ser.U64(rtd.ChainId)
-	ser.U64(rtd.MaxGasAmount)
-	rtd.Action.MarshalBCS(ser)
+func (rd *TransactionData) MarshalBCS(ser *bcs.Serializer) {
+	rd.Sender.MarshalBCS(ser)
+	ser.U64(rd.SequenceNumber)
+	ser.U64(rd.ChainId)
+	ser.U64(rd.MaxGasAmount)
+	rd.Action.MarshalBCS(ser)
 }
-func (rtd *RoochTransactionData) UnmarshalBCS(des *bcs.Deserializer) {
-	rtd.Sender.UnmarshalBCS(des)
-	rtd.SequenceNumber = des.U64()
-	rtd.ChainId = des.U64()
-	rtd.MaxGasAmount = des.U64()
-	rtd.Action.UnmarshalBCS(des)
+func (rd *TransactionData) UnmarshalBCS(des *bcs.Deserializer) {
+	rd.Sender.UnmarshalBCS(des)
+	rd.SequenceNumber = des.U64()
+	rd.ChainId = des.U64()
+	rd.MaxGasAmount = des.U64()
+	rd.Action.UnmarshalBCS(des)
 }
 
 //hash(): Bytes {
 //return sha3_256(this.encode())
 //}
 
-func (rtd *RoochTransactionData) Hash() []byte {
-	bytes, err := bcs.Serialize(rtd)
+func (rd *TransactionData) Hash() ([]byte, error) {
+	bytes, err := bcs.Serialize(rd)
 	if err != nil {
-		panic("Unable to serialize Rooch Transaction Data when call Hash func")
+		return nil, errors.New("unable to serialize Transaction Data")
 	}
 
-	return types.Sha3256(bytes)
-	//.(TransactionSigner)
+	return types.Sha3256(bytes), nil
 }
 
 //pub struct L1Block {
@@ -571,7 +621,7 @@ func (lt *L1Transaction) UnmarshalBCS(des *bcs.Deserializer) {
 }
 
 //pub struct RoochTransaction {
-//pub data: RoochTransactionData,
+//pub data: TransactionData,
 //pub authenticator: Authenticator,
 //
 //#[serde(skip_serializing, skip_deserializing)]
@@ -579,9 +629,9 @@ func (lt *L1Transaction) UnmarshalBCS(des *bcs.Deserializer) {
 //}
 
 type RoochTransaction struct {
-	Data          RoochTransactionData `json:"data"`
-	Authenticator Authenticator        `json:"authenticator"`
-	DataHash      string               `json:"data_hash,omitempty"`
+	Data          TransactionData `json:"data"`
+	Authenticator Authenticator   `json:"authenticator"`
+	DataHash      string          `json:"data_hash,omitempty"`
 	//GasUsed      uint64 `json:"gas_used"`
 	/// The vm status. If it is not `Executed`, this will provide the general error class. Execution
 	/// failures and Move abort's receive more detailed information. But other errors are generally

@@ -86,7 +86,7 @@ type MoveAction struct {
 	CallFunction *CallFunction
 }
 
-type RoochTransactionData struct {
+type TransactionData struct {
 	Sender         string
 	SequenceNumber uint64
 	ChainId        uint64
