@@ -23,7 +23,7 @@ func NewObjectID(address []RoochAddress) ObjectID {
 func ConvertObjectID(input interface{}) (ObjectID, error) {
 	switch input.(type) {
 	case string, []byte:
-		address, err := address.ConvertToRoochAddress(input)
+		address, err := address.NewRoochAddress(input)
 		if err != nil {
 			return ObjectID{}, fmt.Errorf("failed to convert address: %w", err)
 		}
@@ -33,7 +33,7 @@ func ConvertObjectID(input interface{}) (ObjectID, error) {
 		var addresses []RoochAddress
 		bytes, _ := (input).([][]byte)
 		for _, value := range bytes {
-			address, err := address.ConvertToRoochAddress(value)
+			address, err := address.NewRoochAddress(value)
 			if err != nil {
 				return ObjectID{}, fmt.Errorf("failed to convert address: %w", err)
 			}

@@ -5,7 +5,6 @@ import (
 	"encoding/hex"
 	"fmt"
 	"github.com/rooch-network/rooch-go-sdk/crypto"
-	"github.com/rooch-network/rooch-go-sdk/types/transactions"
 	"math/big"
 	"strings"
 
@@ -202,7 +201,7 @@ func (c *RoochClient) GetAccountSequenceNumber(context context.Context, address 
 //}
 
 func (c *RoochClient) SubmitTransaction(context context.Context, signer Signer,
-	transaction transactions.Transaction) (string, error) {
+	transaction types.Transaction) (string, error) {
 
 	authenticator, err := signer.SignTransaction(transaction)
 	if err != nil {
@@ -256,7 +255,7 @@ func (c *RoochClient) SubmitSignedTransactionBytes(context context.Context,
 	return result, nil
 }
 
-func (c *RoochClient) BuildRawUserTransaction(context context.Context, sender types.AccountAddress, payload transactions.TransactionPayload,
+func (c *RoochClient) BuildRawUserTransaction(context context.Context, sender types.AccountAddress, payload types.TransactionPayload,
 	gasPrice int, gasLimit uint64, seq uint64) (*types.RawUserTransaction, error) {
 	nodeInfo, err := c.GetNodeInfo(context)
 	if err != nil {

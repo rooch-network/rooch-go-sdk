@@ -1,9 +1,8 @@
-package transactions
+package types
 
 import (
 	"fmt"
 	"github.com/rooch-network/rooch-go-sdk/bcs"
-	"github.com/rooch-network/rooch-go-sdk/types"
 )
 
 //region TransactionPayload
@@ -83,9 +82,9 @@ func (txn *TransactionPayload) UnmarshalBCS(des *bcs.Deserializer) {
 
 // EntryFunction call a single published entry function arguments are ordered BCS encoded bytes
 type EntryFunction struct {
-	Module   types.ModuleId
+	Module   ModuleId
 	Function string
-	ArgTypes []types.TypeTag
+	ArgTypes []TypeTag
 	Args     [][]byte
 }
 
@@ -111,7 +110,7 @@ func (sf *EntryFunction) MarshalBCS(ser *bcs.Serializer) {
 func (sf *EntryFunction) UnmarshalBCS(des *bcs.Deserializer) {
 	sf.Module.UnmarshalBCS(des)
 	sf.Function = des.ReadString()
-	sf.ArgTypes = bcs.DeserializeSequence[types.TypeTag](des)
+	sf.ArgTypes = bcs.DeserializeSequence[TypeTag](des)
 	alen := des.Uleb128()
 	sf.Args = make([][]byte, alen)
 	for i := range alen {
@@ -126,7 +125,7 @@ func (sf *EntryFunction) UnmarshalBCS(des *bcs.Deserializer) {
 
 // Multisig is an on-chain multisig transaction, that calls an entry function associated
 type Multisig struct {
-	MultisigAddress types.AccountAddress
+	MultisigAddress AccountAddress
 	Payload         *MultisigTransactionPayload // Optional
 }
 

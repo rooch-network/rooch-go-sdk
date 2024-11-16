@@ -30,5 +30,8 @@ type (
 	Address interface{} // Can be string, *address.Address, or []byte
 )
 
-// Identifier type
-type Identifier string
+// Bytes is a type alias for []byte
+type Bytes []byte
+
+// EmptyBytes represents an empty byte slice
+var EmptyBytes = make([]byte, 0)

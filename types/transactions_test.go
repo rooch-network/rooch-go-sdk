@@ -1,4 +1,4 @@
-package transactions
+package types
 
 import (
 	"github.com/rooch-network/rooch-go-sdk/bcs"

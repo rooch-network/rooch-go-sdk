@@ -1,11 +1,11 @@
-package transactions
+package types
 
 import (
 	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/rooch-network/rooch-go-sdk/crypto"
-	"github.com/rooch-network/rooch-go-sdk/types"
+	"github.com/rooch-network/rooch-go-sdk/utils"
 
 	//"github.com/pkg/errors"
 
@@ -83,6 +83,12 @@ func (t *Transaction) UnmarshalBCS(des *bcs.Deserializer) {
 //	t.data = NewTransactionData(MoveAction.NewCallFunction(input.CallFunctionArgs))
 //}
 
+//MarshalBCS(ser *bcs.Serializer)
+////UnmarshalBCS(des *bcs.Deserializer)
+////GetInfo() *string
+////HashData() ([]byte, error)
+////getData() *types.TransactionData
+
 // GetInfo returns the transaction info
 func (t *Transaction) GetInfo() *string {
 	return &t.Info
@@ -110,7 +116,7 @@ func (t *Transaction) GetInfo() *string {
 
 // HashData returns the hash of the transaction data
 func (t *Transaction) HashData() ([]byte, error) {
-	return t.getData().Hash()
+	return t.Data.Hash()
 }
 
 // getData returns the transaction data after validation
@@ -230,9 +236,9 @@ type TransactionExecutionInfo struct {
 type MoveActionVariant uint32
 
 const (
-	MoveActionVariantScript       MoveActionVariant = 0
-	MoveActionVariantFunction     MoveActionVariant = 1 // Deprecated
-	MoveActionVariantModuleBundle MoveActionVariant = 2
+	MoveActionVariantScript   MoveActionVariant = iota
+	MoveActionVariantFunction                   // Deprecated
+	MoveActionVariantModuleBundle
 	//MoveActionVariantUnknown       MoveActionVariant = 10
 )
 
@@ -398,9 +404,9 @@ func (mb *ModuleBundle) UnmarshalBCS(des *bcs.Deserializer) {
 //}
 
 type ScriptCall struct {
-	Code   []byte          `json:"code"`
-	TyArgs []types.TypeTag `json:"ty_args"`
-	Args   [][]byte        `json:"args"`
+	Code   []byte    `json:"code"`
+	TyArgs []TypeTag `json:"ty_args"`
+	Args   [][]byte  `json:"args"`
 }
 
 func (sc *ScriptCall) MoveActionType() MoveActionVariant {
@@ -421,7 +427,7 @@ func (sc *ScriptCall) MarshalBCS(ser *bcs.Serializer) {
 }
 func (sc *ScriptCall) UnmarshalBCS(des *bcs.Deserializer) {
 	sc.Code = des.ReadBytes()
-	sc.TyArgs = bcs.DeserializeSequence[types.TypeTag](des)
+	sc.TyArgs = bcs.DeserializeSequence[TypeTag](des)
 	alen := des.Uleb128()
 	sc.Args = make([][]byte, alen)
 	for i := range alen {
@@ -436,9 +442,9 @@ func (sc *ScriptCall) UnmarshalBCS(des *bcs.Deserializer) {
 //}
 
 type FunctionCall struct {
-	FunctionId types.FunctionId `json:"function_id"`
-	TyArgs     []types.TypeTag  `json:"ty_args"`
-	Args       [][]byte         `json:"args"`
+	FunctionId FunctionId `json:"function_id"`
+	TyArgs     []TypeTag  `json:"ty_args"`
+	Args       [][]byte   `json:"args"`
 }
 
 func (fc *FunctionCall) MoveActionType() MoveActionVariant {
@@ -478,7 +484,7 @@ func (fc *FunctionCall) UnmarshalBCS(des *bcs.Deserializer) {
 
 	fc.FunctionId.UnmarshalBCS(des)
 	//fc.Code = des.ReadBytes()
-	fc.TyArgs = bcs.DeserializeSequence[types.TypeTag](des)
+	fc.TyArgs = bcs.DeserializeSequence[TypeTag](des)
 	alen := des.Uleb128()
 	fc.Args = make([][]byte, alen)
 	for i := range alen {
@@ -509,11 +515,11 @@ func (fc *FunctionCall) UnmarshalBCS(des *bcs.Deserializer) {
 //}
 
 type TransactionData struct {
-	Sender         types.RoochAddress `json:"sender"`
-	SequenceNumber uint64             `json:"sequence_number"`
-	ChainId        uint64             `json:"chain_id"`
-	MaxGasAmount   uint64             `json:"max_gas_amount"`
-	Action         MoveAction         `json:"action"`
+	Sender         RoochAddress `json:"sender"`
+	SequenceNumber uint64       `json:"sequence_number"`
+	ChainId        uint64       `json:"chain_id"`
+	MaxGasAmount   uint64       `json:"max_gas_amount"`
+	Action         MoveAction   `json:"action"`
 	//GasUsed      uint64 `json:"gas_used"`
 	/// The vm status. If it is not `Executed`, this will provide the general error class. Execution
 	/// failures and Move abort's receive more detailed information. But other errors are generally
@@ -542,13 +548,16 @@ func (rd *TransactionData) UnmarshalBCS(des *bcs.Deserializer) {
 //return sha3_256(this.encode())
 //}
 
+//Hash() ([]byte, error)
+//bcs.Struct
+
 func (rd *TransactionData) Hash() ([]byte, error) {
 	bytes, err := bcs.Serialize(rd)
 	if err != nil {
 		return nil, errors.New("unable to serialize Transaction Data")
 	}
 
-	return types.Sha3256(bytes), nil
+	return utils.Sha3256(bytes), nil
 }
 
 //pub struct L1Block {
@@ -558,9 +567,9 @@ func (rd *TransactionData) Hash() ([]byte, error) {
 //}
 
 type L1Block struct {
-	ChainId     types.MultiChainIDVariant `json:"chain_id"`
-	BlockHeight uint64                    `json:"block_height"`
-	BlockHash   []byte                    `json:"block_hash"`
+	ChainId     MultiChainIDVariant `json:"chain_id"`
+	BlockHeight uint64              `json:"block_height"`
+	BlockHash   []byte              `json:"block_hash"`
 	//GasUsed      uint64 `json:"gas_used"`
 	/// The vm status. If it is not `Executed`, this will provide the general error class. Execution
 	/// failures and Move abort's receive more detailed information. But other errors are generally
@@ -580,7 +589,7 @@ func (lb *L1Block) MarshalBCS(ser *bcs.Serializer) {
 	ser.WriteBytes(lb.BlockHash)
 }
 func (lb *L1Block) UnmarshalBCS(des *bcs.Deserializer) {
-	lb.ChainId = types.MultiChainIDVariant(des.U64())
+	lb.ChainId = MultiChainIDVariant(des.U64())
 	lb.BlockHeight = des.U64()
 	lb.BlockHash = des.ReadBytes()
 }
@@ -593,9 +602,9 @@ func (lb *L1Block) UnmarshalBCS(des *bcs.Deserializer) {
 //}
 
 type L1Transaction struct {
-	ChainId   types.MultiChainIDVariant `json:"chain_id"`
-	BlockHash []byte                    `json:"block_hash"`
-	TxID      []byte                    `json:"txid"`
+	ChainId   MultiChainIDVariant `json:"chain_id"`
+	BlockHash []byte              `json:"block_hash"`
+	TxID      []byte              `json:"txid"`
 	//GasUsed      uint64 `json:"gas_used"`
 	/// The vm status. If it is not `Executed`, this will provide the general error class. Execution
 	/// failures and Move abort's receive more detailed information. But other errors are generally
@@ -615,7 +624,7 @@ func (lt *L1Transaction) MarshalBCS(ser *bcs.Serializer) {
 	ser.WriteBytes(lt.TxID)
 }
 func (lt *L1Transaction) UnmarshalBCS(des *bcs.Deserializer) {
-	lt.ChainId = types.MultiChainIDVariant(des.U64())
+	lt.ChainId = MultiChainIDVariant(des.U64())
 	lt.BlockHash = des.ReadBytes()
 	lt.TxID = des.ReadBytes()
 }
