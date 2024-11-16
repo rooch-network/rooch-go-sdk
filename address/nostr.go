@@ -5,18 +5,19 @@ package address
 
 import (
 	"fmt"
-	"github.com/btcsuite/btcutil/bech32"
+	//"github.com/btcsuite/btcutil/bech32"
+	"github.com/btcsuite/btcd/btcutil/bech32"
 )
 
 const PREFIX_BECH32_PUBLIC_KEY = "npub"
 
-type NoStrAddress struct {
+type NostrAddress struct {
 	str   string
 	bytes []byte
 }
 
-// NewNoStrAddress creates a new NoStrAddress from either a string or bytes
-func NewNoStrAddress(input interface{}) (*NoStrAddress, error) {
+// NewNostrAddress creates a new NostrAddress from either a string or bytes
+func NewNostrAddress(input interface{}) (*NostrAddress, error) {
 	switch v := input.(type) {
 	case string:
 		// Decode bech32 string
@@ -31,7 +32,7 @@ func NewNoStrAddress(input interface{}) (*NoStrAddress, error) {
 			return nil, err
 		}
 
-		return &NoStrAddress{
+		return &NostrAddress{
 			str:   v,
 			bytes: converted,
 		}, nil
@@ -49,7 +50,7 @@ func NewNoStrAddress(input interface{}) (*NoStrAddress, error) {
 			return nil, err
 		}
 
-		return &NoStrAddress{
+		return &NostrAddress{
 			str:   str,
 			bytes: v,
 		}, nil
@@ -59,9 +60,9 @@ func NewNoStrAddress(input interface{}) (*NoStrAddress, error) {
 	}
 }
 
-// GenRoochAddress generates a RoochAddress from the NoStrAddress
-func (n *NoStrAddress) GenRoochAddress() (*RoochAddress, error) {
-	btcAddr, err := BitcoinAddressFromPublicKey(n.bytes)
+// GenRoochAddress generates a RoochAddress from the NostrAddress
+func (n *NostrAddress) GenRoochAddress() (*RoochAddress, error) {
+	btcAddr, err := BitcoinAddressOnlyFromPublicKey(n.bytes)
 	if err != nil {
 		return nil, err
 	}
@@ -69,11 +70,11 @@ func (n *NoStrAddress) GenRoochAddress() (*RoochAddress, error) {
 }
 
 // ToStr returns the string representation
-func (n *NoStrAddress) ToStr() string {
+func (n *NostrAddress) ToStr() string {
 	return n.str
 }
 
 // ToBytes returns the byte representation
-func (n *NoStrAddress) ToBytes() []byte {
+func (n *NostrAddress) ToBytes() []byte {
 	return n.bytes
 }

@@ -58,12 +58,12 @@ const sendPrefix = "0000000000000000"
 //		/// The total number of nodes in the accumulator.
 //		pub tx_accumulator_num_nodes: u64,
 //	}
-type Authenticator = crypto.Authenticator
+//type Authenticator = Authenticator
 
 type Transaction struct {
-	Data          TransactionData `json:"data"`
-	Authenticator Authenticator   `json:"authenticator"`
-	Info          string          `json:"info"`
+	Data          TransactionData      `json:"data"`
+	Authenticator crypto.Authenticator `json:"authenticator"`
+	Info          string               `json:"info"`
 }
 
 func (t *Transaction) MarshalBCS(ser *bcs.Serializer) {
@@ -629,9 +629,9 @@ func (lt *L1Transaction) UnmarshalBCS(des *bcs.Deserializer) {
 //}
 
 type RoochTransaction struct {
-	Data          TransactionData `json:"data"`
-	Authenticator Authenticator   `json:"authenticator"`
-	DataHash      string          `json:"data_hash,omitempty"`
+	Data          TransactionData      `json:"data"`
+	Authenticator crypto.Authenticator `json:"authenticator"`
+	DataHash      string               `json:"data_hash,omitempty"`
 	//GasUsed      uint64 `json:"gas_used"`
 	/// The vm status. If it is not `Executed`, this will provide the general error class. Execution
 	/// failures and Move abort's receive more detailed information. But other errors are generally

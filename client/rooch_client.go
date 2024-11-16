@@ -5,7 +5,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"github.com/rooch-network/rooch-go-sdk/crypto"
-	"github.com/rooch-network/rooch-go-sdk/transactions"
+	"github.com/rooch-network/rooch-go-sdk/types/transactions"
 	"math/big"
 	"strings"
 

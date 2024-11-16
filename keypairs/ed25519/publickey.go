@@ -3,6 +3,7 @@ package ed25519
 import (
 	"crypto/ed25519"
 	"encoding/base64"
+	"encoding/hex"
 	"errors"
 	"github.com/rooch-network/rooch-go-sdk/address"
 	"github.com/rooch-network/rooch-go-sdk/bcs"
@@ -55,6 +56,11 @@ func (pk *Ed25519PublicKey) Equals(other crypto.PublicKey[address.RoochAddress])
 // ToBytes returns the byte array representation of the Ed25519 public key
 func (pk *Ed25519PublicKey) ToBytes() []byte {
 	return pk.data
+}
+
+// String returns the hex string representation of the public key
+func (pk *Ed25519PublicKey) String() string {
+	return hex.EncodeToString(pk.data)
 }
 
 // Flag returns the signature scheme flag for Ed25519

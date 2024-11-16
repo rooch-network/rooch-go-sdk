@@ -93,3 +93,12 @@ func Blake2b512(msg []byte) ([]byte, error) {
 //	ripemd.Write(sha[:])
 //	return ripemd.Sum(nil)
 //}
+
+func TaggedHash(tag string, msg []byte) []byte {
+	tagHash := sha256.Sum256([]byte(tag))
+	h := sha256.New()
+	h.Write(tagHash[:])
+	h.Write(tagHash[:])
+	h.Write(msg)
+	return h.Sum(nil)
+}

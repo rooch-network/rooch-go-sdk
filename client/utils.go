@@ -4,8 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
-	"github.com/rooch-network/rooch-go-sdk/transactions"
-
+	"github.com/rooch-network/rooch-go-sdk/types/transactions"
 	"math/big"
 	"strings"
 

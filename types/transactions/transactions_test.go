@@ -2,16 +2,15 @@ package transactions
 
 import (
 	"github.com/rooch-network/rooch-go-sdk/bcs"
-	"github.com/rooch-network/rooch-go-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
 func TestRawTransactionSign(t *testing.T) {
-	sender, err := types.NewEd25519Account()
+	sender, err := NewEd25519Account()
 	assert.NoError(t, err)
 
-	receiver, err := types.NewEd25519Account()
+	receiver, err := NewEd25519Account()
 	assert.NoError(t, err)
 	dest := receiver.Address
 

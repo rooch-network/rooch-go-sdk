@@ -2,7 +2,7 @@ package crypto
 
 import (
 	"github.com/rooch-network/rooch-go-sdk/address"
-	"github.com/rooch-network/rooch-go-sdk/transactions"
+	"github.com/rooch-network/rooch-go-sdk/bcs"
 )
 
 //type SignatureScheme = string
@@ -37,6 +37,19 @@ import (
 //	}
 //}
 
+type TransactionData interface {
+	Hash() ([]byte, error)
+	bcs.Struct
+}
+
+type Transaction interface {
+	getData() *TransactionData
+	GetInfo() *string
+	HashData() ([]byte, error)
+	//SetAuthenticator(*Authenticator)
+	bcs.Struct
+}
+
 // Signer a generic interface for any kind of signing
 type Signer interface {
 	//// Sign signs a transaction and returns an associated [AccountAuthenticator]
@@ -58,7 +71,7 @@ type Signer interface {
 	Sign(msg []byte) ([]byte, error)
 
 	// SignMessage signs a message and returns the raw [Signature] without a [PublicKey] for verification
-	SignTransaction(tx *transactions.Transaction) (*transactions.Authenticator, error)
+	SignTransaction(tx *Transaction) (*Authenticator, error)
 
 	// SimulationAuthenticator creates a new [AccountAuthenticator] for simulation purposes
 	GetBitcoinAddress() (*address.BitcoinAddress, error)

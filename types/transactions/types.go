@@ -2,6 +2,7 @@ package transactions
 
 import (
 	"fmt"
+	"github.com/rooch-network/rooch-go-sdk/types"
 )
 
 //// Args and TypeTag interfaces as placeholders - implement according to your BCS package
@@ -10,9 +11,9 @@ import (
 
 // CallScript represents a script to be executed
 type CallScript struct {
-	Code     string    `json:"code"`
-	Args     []Args    `json:"args"`
-	TypeArgs []TypeTag `json:"typeArgs"`
+	Code     string          `json:"code"`
+	Args     []types.Args    `json:"args"`
+	TypeArgs []types.TypeTag `json:"typeArgs"`
 }
 
 // FunctionArgs represents either a full address/module/function path or a direct target
@@ -49,13 +50,13 @@ func NewFunctionArgs(input map[string]interface{}) (*FunctionArgs, error) {
 
 // CallFunctionArgs represents arguments for calling a function
 type CallFunctionArgs struct {
-	*FunctionArgs           // Embed FunctionArgs
-	Args          []Args    `json:"args,omitempty"`
-	TypeArgs      []TypeTag `json:"typeArgs,omitempty"`
+	*FunctionArgs                 // Embed FunctionArgs
+	Args          []types.Args    `json:"args,omitempty"`
+	TypeArgs      []types.TypeTag `json:"typeArgs,omitempty"`
 }
 
 // NewCallFunctionArgs creates a new CallFunctionArgs instance
-func NewCallFunctionArgs(funcArgs *FunctionArgs, args []Args, typeArgs []TypeTag) *CallFunctionArgs {
+func NewCallFunctionArgs(funcArgs *FunctionArgs, args []types.Args, typeArgs []types.TypeTag) *CallFunctionArgs {
 	return &CallFunctionArgs{
 		FunctionArgs: funcArgs,
 		Args:         args,

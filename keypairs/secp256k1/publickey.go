@@ -47,8 +47,12 @@ func NewSecp256k1PublicKey(value interface{}) (*Secp256k1PublicKey, error) {
 }
 
 // Equals checks if two Secp256k1 public keys are equal
-func (pk *Secp256k1PublicKey) Equals(other *Secp256k1PublicKey) bool {
-	return crypto.BytesEqual(pk.data, other.data)
+func (pk *Secp256k1PublicKey) Equals(other crypto.PublicKey[address.RoochAddress]) bool {
+	//return crypto.BytesEqual(pk.data, other.data)
+	if pk == nil || other == nil {
+		return false
+	}
+	return utils.BytesEqual(pk.data, other.ToBytes())
 }
 
 // ToBytes returns the byte array representation of the Secp256k1 public key
@@ -62,7 +66,9 @@ func (pk *Secp256k1PublicKey) String() string {
 }
 
 // ToAddress returns the Bitcoin address associated with this Secp256k1 public key
-func (pk *Secp256k1PublicKey) ToAddress() *address.AddressView {
+// func (pk *Secp256k1PublicKey) ToAddress() (*address.AddressView, error) {
+func (pk *Secp256k1PublicKey) ToAddress() (*address.BitcoinAddress, error) {
+
 	return address.NewAddressView(pk.data)
 }
 

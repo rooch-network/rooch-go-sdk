@@ -1,11 +1,20 @@
 package address
 
 import (
+	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/rooch-network/rooch-go-sdk/bcs"
-	"github.com/rooch-network/rooch-go-sdk/crypto"
+	//"github.com/rooch-network/rooch-go-sdk/crypto"
+	"strings"
 )
+
+// ErrAddressTooShort is returned when an AccountAddress is too short
+var ErrAddressTooShort = errors.New("AccountAddress too short")
+
+// ErrAddressTooLong is returned when an AccountAddress is too long
+var ErrAddressTooLong = errors.New("AccountAddress too long")
 
 // AccountAddress a 32-byte representation of an on-chain address
 //
@@ -58,17 +67,17 @@ func (aa *AccountAddress) String() string {
 	}
 }
 
-// FromAuthKey converts [crypto.AuthenticationKey] to [AccountAddress]
-func (aa *AccountAddress) FromAuthKey(authKey *crypto.AuthenticationKey) {
-	copy(aa[:], authKey[:])
-}
-
-// AuthKey converts [AccountAddress] to [crypto.AuthenticationKey]
-func (aa *AccountAddress) AuthKey() *crypto.AuthenticationKey {
-	authKey := &crypto.AuthenticationKey{}
-	copy(authKey[:], aa[:])
-	return authKey
-}
+//// FromAuthKey converts [crypto.AuthenticationKey] to [AccountAddress]
+//func (aa *AccountAddress) FromAuthKey(authKey *crypto.AuthenticationKey) {
+//	copy(aa[:], authKey[:])
+//}
+//
+//// AuthKey converts [AccountAddress] to [crypto.AuthenticationKey]
+//func (aa *AccountAddress) AuthKey() *crypto.AuthenticationKey {
+//	authKey := &crypto.AuthenticationKey{}
+//	copy(authKey[:], aa[:])
+//	return authKey
+//}
 
 // StringLong Returns the long string representation of the AccountAddress
 //
@@ -123,10 +132,35 @@ func (aa *AccountAddress) UnmarshalJSON(b []byte) error {
 //	return aa.DerivedAddress(seed, crypto.ResourceAccountScheme)
 //}
 
-// DerivedAddress addresses are derived by the address, the seed, then the type byte
-func (aa *AccountAddress) DerivedAddress(seed []byte, typeByte uint8) (accountAddress AccountAddress) {
-	authKey := aa.AuthKey()
-	authKey.FromBytesAndScheme(append(authKey[:], seed[:]...), typeByte)
-	copy(accountAddress[:], authKey[:])
-	return
+//// DerivedAddress addresses are derived by the address, the seed, then the type byte
+//func (aa *AccountAddress) DerivedAddress(seed []byte, typeByte uint8) (accountAddress AccountAddress) {
+//	authKey := aa.AuthKey()
+//	authKey.FromBytesAndScheme(append(authKey[:], seed[:]...), typeByte)
+//	copy(accountAddress[:], authKey[:])
+//	return
+//}
+
+// ParseStringRelaxed parses a string into an AccountAddress
+// TODO: add strict mode checking
+func (aa *AccountAddress) ParseStringRelaxed(x string) error {
+	if strings.HasPrefix(x, "0x") {
+		x = x[2:]
+	}
+	if len(x) < 1 {
+		return ErrAddressTooShort
+	}
+	if len(x) > 64 {
+		return ErrAddressTooLong
+	}
+	if len(x)%2 != 0 {
+		x = "0" + x
+	}
+	bytes, err := hex.DecodeString(x)
+	if err != nil {
+		return err
+	}
+	// zero-prefix/right-align what bytes we got
+	copy((*aa)[32-len(bytes):], bytes)
+
+	return nil
 }

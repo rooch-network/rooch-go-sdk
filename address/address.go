@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"github.com/btcsuite/btcd/btcutil/bech32"
 	"github.com/rooch-network/rooch-go-sdk/bcs"
-	"github.com/rooch-network/rooch-go-sdk/crypto"
 	"strings"
 )
 
@@ -85,17 +84,17 @@ func (ra *RoochAddress) String() string {
 	}
 }
 
-// FromAuthKey converts [crypto.AuthenticationKey] to [RoochAddress]
-func (ra *RoochAddress) FromAuthKey(authKey *crypto.AuthenticationKey) {
-	copy(ra.address[:], authKey[:])
-}
-
-// AuthKey converts [RoochAddress] to [crypto.AuthenticationKey]
-func (ra *RoochAddress) AuthKey() *crypto.AuthenticationKey {
-	authKey := &crypto.AuthenticationKey{}
-	copy(authKey[:], ra.address[:])
-	return authKey
-}
+//// FromAuthKey converts [crypto.AuthenticationKey] to [RoochAddress]
+//func (ra *RoochAddress) FromAuthKey(authKey *crypto.AuthenticationKey) {
+//	copy(ra.address[:], authKey[:])
+//}
+//
+//// AuthKey converts [RoochAddress] to [crypto.AuthenticationKey]
+//func (ra *RoochAddress) AuthKey() *crypto.AuthenticationKey {
+//	authKey := &crypto.AuthenticationKey{}
+//	copy(authKey[:], ra.address[:])
+//	return authKey
+//}
 
 // StringLong Returns the long string representation of the RoochAddress
 //
@@ -151,13 +150,13 @@ func (ra *RoochAddress) MarshalJSON() ([]byte, error) {
 //	return ra.DerivedAddress(seed, crypto.ResourceAccountScheme)
 //}
 
-// DerivedAddress addresses are derived by the address, the seed, then the type byte
-func (ra *RoochAddress) DerivedAddress(seed []byte, typeByte uint8) (roochAddress RoochAddress) {
-	authKey := ra.AuthKey()
-	authKey.FromBytesAndScheme(append(authKey[:], seed[:]...), typeByte)
-	copy(roochAddress.address[:], authKey[:])
-	return
-}
+//// DerivedAddress addresses are derived by the address, the seed, then the type byte
+//func (ra *RoochAddress) DerivedAddress(seed []byte, typeByte uint8) (roochAddress RoochAddress) {
+//	authKey := ra.AuthKey()
+//	authKey.FromBytesAndScheme(append(authKey[:], seed[:]...), typeByte)
+//	copy(roochAddress.address[:], authKey[:])
+//	return
+//}
 
 //var (
 //	ErrInvalidAddress     = errors.New("invalid address")

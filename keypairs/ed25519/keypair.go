@@ -7,13 +7,13 @@ import (
 	"errors"
 	"fmt"
 	"github.com/rooch-network/rooch-go-sdk/address"
+	"github.com/rooch-network/rooch-go-sdk/types/transactions"
 	"strings"
 
 	"github.com/tyler-smith/go-bip32"
 	"github.com/tyler-smith/go-bip39"
 
 	"github.com/rooch-network/rooch-go-sdk/crypto"
-	"github.com/rooch-network/rooch-go-sdk/transactions"
 )
 
 const (
@@ -122,7 +122,7 @@ func (k *Ed25519Keypair) Sign(input []byte) ([]byte, error) {
 }
 
 // SignTransaction signs a transaction and returns an authenticator
-func (k *Ed25519Keypair) SignTransaction(tx *transactions.Transaction) (*crypto.Authenticator, error) {
+func (k *Ed25519Keypair) SignTransaction(tx *transactions.Transaction) (*transactions.Authenticator, error) {
 	//return AuthenticatorRooch(tx.HashData(), k)
 	hash, err := tx.HashData()
 	if err != nil {

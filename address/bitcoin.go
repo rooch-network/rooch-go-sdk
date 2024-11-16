@@ -1,10 +1,10 @@
 package address
 
 import (
-	"crypto/sha256"
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 
 	"github.com/btcsuite/btcd/btcutil/base58"
 	"github.com/btcsuite/btcd/btcutil/bech32"
@@ -84,102 +84,112 @@ type BitcoinAddressInfo struct {
 	Version uint8
 }
 
+//// BitcoinAddress represents a Bitcoin address
+//type BitcoinAddress struct {
+//	rawAddress string
+//	bytes      []byte
+//	network    BitcoinNetworkType
+//}
+
 // BitcoinAddress represents a Bitcoin address
 type BitcoinAddress struct {
-	rawAddress string
-	bytes      []byte
-	network    BitcoinNetworkType
+	bytes        []byte
+	rawAddress   string
+	roochAddress *RoochAddress
 }
 
 // NewBitcoinAddress creates a new BitcoinAddress instance
 func NewBitcoinAddress(input string, network BitcoinNetworkType) (*BitcoinAddress, error) {
-	addr := &BitcoinAddress{
-		rawAddress: input,
-		network:    network,
-	}
+	ba := &BitcoinAddress{rawAddress: input}
 
 	if isHex(input) {
 		// Handle hex input
-		hexBytes, err := hex.DecodeString(stripHexPrefix(input))
+		hexStr := input
+		if len(input) >= 2 && input[:2] == "0x" {
+			hexStr = input[2:]
+		}
+		decoded, err := hex.DecodeString(hexStr)
 		if err != nil {
 			return nil, err
 		}
-		addr.bytes = hexBytes
+		ba.bytes = decoded
 
 		var prefixed []byte
-		version := hexBytes[1]
+		version := ba.bytes[1]
 
-		switch hexBytes[0] {
-		case byte(PKH):
+		switch BitcoinAddressType(ba.bytes[0]) {
+		case PKH:
 			prefixed = make([]byte, 22)
 			prefixed[0] = version
-			prefixed[1] = addr.getPubkeyAddressPrefix()
-			copy(prefixed[2:], hexBytes[2:])
-			addr.rawAddress = base58.CheckEncode(prefixed[1:], prefixed[0])
+			prefixed[1] = ba.GetPubkeyAddressPrefix(network)
+			copy(prefixed[2:], ba.bytes[2:])
+			ba.rawAddress = base58.CheckEncode(prefixed[1:], prefixed[0])
 
-		case byte(SH):
+		case SH:
 			prefixed = make([]byte, 22)
 			prefixed[0] = version
-			prefixed[1] = addr.getScriptAddressPrefix()
-			copy(prefixed[2:], hexBytes[2:])
-			addr.rawAddress = base58.CheckEncode(prefixed[1:], prefixed[0])
+			prefixed[1] = ba.GetScriptAddressPrefix(network)
+			copy(prefixed[2:], ba.bytes[2:])
+			ba.rawAddress = base58.CheckEncode(prefixed[1:], prefixed[0])
 
-		case byte(WITNESS):
+		case WITNESS:
 			hrp := NewBitcoinNetwork(network).Bech32HRP()
-			conv, err := bech32.ConvertBits(hexBytes[2:], 8, 5, true)
+			program := ba.bytes[2:]
+			conv, err := bech32.ConvertBits(program, 8, 5, true)
 			if err != nil {
 				return nil, err
 			}
-			finalConv := append([]byte{version}, conv...)
-
-			var encodedAddr string
-			if version == 0 {
-				encodedAddr, err = bech32.EncodeM(hrp, finalConv)
-			} else {
-				encodedAddr, err = bech32.Encode(hrp, finalConv)
-			}
+			encoded, err := bech32.EncodeM(hrp, conv)
 			if err != nil {
 				return nil, err
 			}
-			addr.rawAddress = encodedAddr
+			ba.rawAddress = encoded
 		}
 	} else {
-		// Handle address string input
-		info, err := addr.decode()
+		// Handle non-hex input
+		info, err := ba.Decode()
 		if err != nil {
 			return nil, err
 		}
-		addr.bytes = addr.wrapAddress(info)
+		ba.bytes = ba.WrapAddress(info.Type, info.Bytes, info.Version)
 	}
 
-	return addr, nil
+	return ba, nil
+}
+
+func BitcoinAddressOnlyFromPublicKey(publicKey []byte) (*BitcoinAddress, error) {
+	return BitcoinAddressFromPublicKey(publicKey, BitcoinNetworkSignet)
 }
 
 // FromPublicKey creates a BitcoinAddress from a public key
-func FromPublicKey(publicKey []byte, network BitcoinNetworkType) (*BitcoinAddress, error) {
-	// Note: This is a simplified implementation
-	// You'll need to implement the actual taproot logic here
+func BitcoinAddressFromPublicKey(publicKey []byte, network BitcoinNetworkType) (*BitcoinAddress, error) {
+	// Implement taproot public key to address conversion
+	pubKey, err := schnorr.ParsePubKey(publicKey)
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert to taproot output key
+	taprootKey := schnorr.SerializePubKey(pubKey)
+
+	// Convert to 5-bit Bech32m words
+	program, err := bech32.ConvertBits(taprootKey, 8, 5, true)
+	if err != nil {
+		return nil, err
+	}
+
+	// Add witness version
+	version := []byte{0x01}
+	program = append(version, program...)
+
+	// Encode with Bech32m
 	hrp := NewBitcoinNetwork(network).Bech32HRP()
-
-	// Convert public key to program
-	program := sha256.Sum256(publicKey)
-
-	// Convert to 5-bit words
-	conv, err := bech32.ConvertBits(program[:], 8, 5, true)
+	address, err := bech32.EncodeM(hrp, program)
 	if err != nil {
 		return nil, err
 	}
 
-	// Add version 1 for taproot
-	words := append([]byte{1}, conv...)
-
-	// Encode with bech32m
-	addr, err := bech32.EncodeM(hrp, words)
-	if err != nil {
-		return nil, err
-	}
-
-	return NewBitcoinAddress(addr, network)
+	return NewBitcoinAddress(address, network)
 }
 
 // ToBytes returns the address bytes
@@ -187,25 +197,43 @@ func (ba *BitcoinAddress) ToBytes() []byte {
 	return []byte(ba.rawAddress)
 }
 
+type MultiChainAddress struct {
+	MultiChainID int
+	RawAddress   []byte
+}
+
 // GenMultiChainAddress generates a multi-chain address
 func (ba *BitcoinAddress) GenMultiChainAddress() []byte {
-	// Implementation depends on your MultiChainAddress structure
-	// This is a placeholder implementation
-	return append([]byte{0x01}, ba.bytes...)
+	// Implement BCS serialization here
+	return nil
 }
 
 // GenRoochAddress generates a Rooch address
-func (ba *BitcoinAddress) GenRoochAddress() ([]byte, error) {
-	hash, err := blake2b.New(RoochAddressLength, nil)
-	if err != nil {
-		return nil, err
+func (ba *BitcoinAddress) GenRoochAddress() (*RoochAddress, error) {
+	//hash, err := blake2b.New(RoochAddressLength, nil)
+	//if err != nil {
+	//	return nil, err
+	//}
+	//hash.Write(ba.bytes)
+	////return hash.Sum(nil), nil
+	//return NewRoochAddressFromBytes(hash.Sum(nil))
+	if ba.roochAddress == nil {
+		hash, err := blake2b.New(RoochAddressLength, nil)
+		if err != nil {
+			return nil, err
+		}
+		hash.Write(ba.bytes)
+		roochAddress, err := NewRoochAddressFromBytes(hash.Sum(nil))
+		if err != nil {
+			return nil, err
+		}
+		ba.roochAddress = roochAddress
 	}
-	hash.Write(ba.bytes)
-	return hash.Sum(nil), nil
+	return ba.roochAddress, nil
 }
 
 // decode decodes the raw address
-func (ba *BitcoinAddress) decode() (*BitcoinAddressInfo, error) {
+func (ba *BitcoinAddress) Decode() (*BitcoinAddressInfo, error) {
 	if len(ba.rawAddress) < 14 || len(ba.rawAddress) > 74 {
 		return nil, errors.New("invalid address length")
 	}
@@ -255,28 +283,38 @@ func (ba *BitcoinAddress) decode() (*BitcoinAddressInfo, error) {
 	}
 }
 
+// WrapAddress wraps the address bytes with type and version
+func (ba *BitcoinAddress) WrapAddress(addrType BitcoinAddressType, data []byte, version byte) []byte {
+	if version != 0 {
+		result := make([]byte, len(data)+2)
+		result[0] = byte(addrType)
+		result[1] = version
+		copy(result[2:], data)
+		return result
+	}
+
+	result := make([]byte, len(data)+1)
+	result[0] = byte(addrType)
+	copy(result[1:], data)
+	return result
+}
+
 // Helper functions
 
-func (ba *BitcoinAddress) getPubkeyAddressPrefix() byte {
-	if ba.network == BitcoinNetworkBitcoin {
+// GetPubkeyAddressPrefix returns the prefix for public key addresses
+func (ba *BitcoinAddress) GetPubkeyAddressPrefix(network BitcoinNetworkType) byte {
+	if network == BitcoinNetworkBitcoin {
 		return PubkeyAddressPrefixMain
 	}
 	return PubkeyAddressPrefixTest
 }
 
-func (ba *BitcoinAddress) getScriptAddressPrefix() byte {
-	if ba.network == BitcoinNetworkBitcoin {
+// GetScriptAddressPrefix returns the prefix for script addresses
+func (ba *BitcoinAddress) GetScriptAddressPrefix(network BitcoinNetworkType) byte {
+	if network == BitcoinNetworkBitcoin {
 		return ScriptAddressPrefixMain
 	}
 	return ScriptAddressPrefixTest
-}
-
-func (ba *BitcoinAddress) wrapAddress(info *BitcoinAddressInfo) []byte {
-	result := make([]byte, len(info.Bytes)+2)
-	result[0] = byte(info.Type)
-	result[1] = info.Version
-	copy(result[2:], info.Bytes)
-	return result
 }
 
 func validateWitness(version byte, program []byte) error {
@@ -309,10 +347,11 @@ func stripHexPrefix(s string) string {
 	return s
 }
 
-//// Hash160 performs RIPEMD160(SHA256(data))
-//func Hash160(data []byte) []byte {
-//	sha := sha256.Sum256(data)
-//	ripemd := ripemd160.New()
-//	ripemd.Write(sha[:])
-//	return ripemd.Sum(nil)
+//func taggedHash(tag string, msg []byte) []byte {
+//	tagHash := sha256.Sum256([]byte(tag))
+//	h := sha256.New()
+//	h.Write(tagHash[:])
+//	h.Write(tagHash[:])
+//	h.Write(msg)
+//	return h.Sum(nil)
 //}

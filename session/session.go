@@ -3,6 +3,7 @@ package session
 import (
 	"encoding/json"
 	"fmt"
+	transactions2 "github.com/rooch-network/rooch-go-sdk/types/transactions"
 	"strings"
 	"time"
 
@@ -133,7 +134,7 @@ func (s *Session) Sign(input []byte) ([]byte, error) {
 	return s.keypair.Sign(input)
 }
 
-func (s *Session) SignTransaction(tx *transactions.Transaction) (*crypto.Authenticator, error) {
+func (s *Session) SignTransaction(tx *transactions2.Transaction) (*transactions2.Authenticator, error) {
 	hashData, err := tx.HashData()
 	if err != nil {
 		return nil, err
@@ -190,7 +191,7 @@ func (s *Session) build(client *client.RoochClient, signer crypto.Signer) (*Sess
 	info := fmt.Sprintf("Welcome to %s\nYou will authorize session:\nScope:\n%s\nTimeOut:%d",
 		s.appName, strings.Join(s.scopes, "\n"), s.maxInactiveInterval)
 
-	tx.CallFunction(transactions.FunctionCall{
+	tx.CallFunction(transactions2.FunctionCall{
 		Target: "0x3::session_key::create_session_key_with_multi_scope_entry",
 		Args: []interface{}{
 			s.appName,

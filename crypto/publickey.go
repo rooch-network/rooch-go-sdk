@@ -16,7 +16,7 @@ type PublicKey[T any] interface {
 	ToBase64() string
 	//
 	//// String returns string representation of the public key
-	//String() string
+	String() string
 
 	// ToBytes returns the byte array representation of the public key
 	ToBytes() []byte

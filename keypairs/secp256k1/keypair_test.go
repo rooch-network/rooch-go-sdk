@@ -34,7 +34,7 @@ func TestSecp256k1Keypair(t *testing.T) {
 		testKey := "roochsecretkey1q969zv4rhqpuj0nkf2e644yppjf34p6zwr3gq0633qc7n9luzg6w6lycezc"
 		expectRoochHexAddress := "0xf892b3fd5fd0e93436ba3dc8d504413769d66901266143d00e49441079243ed0"
 		expectRoochBech32Address := "rooch1lzft8l2l6r5ngd468hyd2pzpxa5av6gpyes585qwf9zpq7fy8mgqh9npj5"
-		expectNoStrAddress := "npub1h54r2zvulk96qjmfnyy83mtry0pp5acnz6uvk637typxtvn90c8s0lrc0g"
+		expectNostrAddress := "npub1h54r2zvulk96qjmfnyy83mtry0pp5acnz6uvk637typxtvn90c8s0lrc0g"
 		expectBitcoinAddress := "bcrt1pw9l5h7vepq8cnpugwm848x3at34gg5eq0mamdrjw0krunfjm0zfq65gjzz"
 
 		sk := FromSecretKey(testKey)
@@ -42,7 +42,7 @@ func TestSecp256k1Keypair(t *testing.T) {
 
 		assert.Equal(t, expectRoochHexAddress, addrView.RoochAddress.ToHexAddress())
 		assert.Equal(t, expectRoochBech32Address, addrView.RoochAddress.ToBech32Address())
-		assert.Equal(t, expectNoStrAddress, addrView.NoStrAddress.ToStr())
+		assert.Equal(t, expectNostrAddress, addrView.NostrAddress.ToStr())
 		assert.Equal(t, expectBitcoinAddress, addrView.BitcoinAddress.ToStr())
 	})
 

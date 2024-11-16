@@ -5,7 +5,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"github.com/rooch-network/rooch-go-sdk/bcs"
-	"github.com/rooch-network/rooch-go-sdk/transactions"
 	"github.com/rooch-network/rooch-go-sdk/utils"
 	"strings"
 )
@@ -174,7 +173,7 @@ func BitcoinAuthValidator(input *BitcoinSignMessage, signer Signer, signWith str
 		return nil, err
 	}
 
-	bitcoin_payload := transactions.BitcoinAuthPayload{
+	bitcoin_payload := BitcoinAuthPayload{
 		Signature: signature,
 		MessagePrefix: bytes.Join([][]byte{
 			[]byte(input.messagePrefix),

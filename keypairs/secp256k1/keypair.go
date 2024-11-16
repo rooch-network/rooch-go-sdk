@@ -5,7 +5,10 @@ import (
 	"errors"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcec/v2/schnorr"
+	"github.com/rooch-network/rooch-go-sdk/address"
+	"github.com/rooch-network/rooch-go-sdk/crypto"
 	"github.com/tyler-smith/go-bip32"
+	"github.com/tyler-smith/go-bip39"
 )
 
 const DefaultSecp256k1DerivationPath = "m/54'/784'/0'/0/0"
@@ -42,12 +45,12 @@ func NewSecp256k1Keypair(keypair *Secp256k1KeypairData) (*Secp256k1Keypair, erro
 }
 
 // Generate generates a new random keypair
-func Generate() (*Secp256k1Keypair, error) {
+func GenerateSecp256k1Keypair() (*Secp256k1Keypair, error) {
 	return NewSecp256k1Keypair(nil)
 }
 
 // FromSecretKey creates a keypair from a raw secret key byte array
-func FromSecretKey(secretKey []byte, skipValidation bool) (*Secp256k1Keypair, error) {
+func FromSecp256k1SecretKey(secretKey []byte, skipValidation bool) (*Secp256k1Keypair, error) {
 	privateKey, publicKey := btcec.PrivKeyFromBytes(secretKey)
 
 	if !skipValidation {
@@ -74,7 +77,7 @@ func FromSecretKey(secretKey []byte, skipValidation bool) (*Secp256k1Keypair, er
 }
 
 // FromSeed generates a keypair from a 32 byte seed
-func FromSeed(seed []byte) (*Secp256k1Keypair, error) {
+func FromSecp256k1Seed(seed []byte) (*Secp256k1Keypair, error) {
 	privateKey, _ := btcec.PrivKeyFromBytes(seed)
 
 	return &Secp256k1Keypair{
@@ -86,8 +89,12 @@ func FromSeed(seed []byte) (*Secp256k1Keypair, error) {
 }
 
 // GetPublicKey returns the public key
-func (kp *Secp256k1Keypair) GetPublicKey() []byte {
-	return kp.keypair.PublicKey
+//
+//	func (kp *Secp256k1Keypair) GetPublicKey() []byte {
+//		return kp.keypair.PublicKey
+//	}
+func (kp *Secp256k1Keypair) GetPublicKey() crypto.PublicKey[address.RoochAddress] {
+	return &Secp256k1PublicKey{kp.keypair.PublicKey}
 }
 
 // GetSchnorrPublicKey returns the Schnorr public key
@@ -115,7 +122,7 @@ func (kp *Secp256k1Keypair) Sign(input []byte) ([]byte, error) {
 }
 
 // DeriveKeypair derives a keypair from mnemonics and path
-func DeriveKeypair(mnemonics string, path string) (*Secp256k1Keypair, error) {
+func DeriveSecp256k1Keypair(mnemonics string, path string) (*Secp256k1Keypair, error) {
 	if path == "" {
 		path = DefaultSecp256k1DerivationPath
 	}
