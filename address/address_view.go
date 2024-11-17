@@ -5,13 +5,18 @@ package address
 
 // AddressView implements the Address interface
 type AddressView struct {
-	bitcoinAddress BitcoinAddress
-	nostrAddress   NostrAddress
-	roochAddress   RoochAddress
+	BitcoinAddress BitcoinAddress
+	NostrAddress   NostrAddress
+	RoochAddress   RoochAddress
 }
 
 // NewAddressView creates a new AddressView instance
-func NewAddressView(publicKey []byte, network BitcoinNetworkType) (*AddressView, error) {
+func NewAddressView(publicKey []byte) (*AddressView, error) {
+	return NewAddressViewWithNetwork(publicKey, BitcoinNetworkRegtest)
+}
+
+// NewAddressView creates a new AddressView instance
+func NewAddressViewWithNetwork(publicKey []byte, network BitcoinNetworkType) (*AddressView, error) {
 	bitcoinAddr, err := BitcoinAddressFromPublicKey(publicKey, network)
 	if err != nil {
 		return nil, err
@@ -26,18 +31,18 @@ func NewAddressView(publicKey []byte, network BitcoinNetworkType) (*AddressView,
 	}
 
 	return &AddressView{
-		bitcoinAddress: *bitcoinAddr,
-		nostrAddress:   *nostrAddr,
-		roochAddress:   *roochAddr,
+		BitcoinAddress: *bitcoinAddr,
+		NostrAddress:   *nostrAddr,
+		RoochAddress:   *roochAddr,
 	}, nil
 }
 
 // ToBytes returns the byte representation of the address
 func (av *AddressView) ToBytes() []byte {
-	return av.roochAddress.Bytes()
+	return av.RoochAddress.Bytes()
 }
 
 // ToStr returns the string representation of the address
 func (av *AddressView) ToStr() string {
-	return av.roochAddress.String()
+	return av.RoochAddress.String()
 }

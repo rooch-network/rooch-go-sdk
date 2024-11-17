@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/btcsuite/btcutil/bech32"
+	"github.com/btcsuite/btcd/btcutil/bech32"
 )
 
 const ROOCH_SECRET_KEY_PREFIX = "roochsecretkey"
@@ -14,12 +14,12 @@ func TestDecodeRoochSecretKey(t *testing.T) {
 		secretKey := make([]byte, 32)
 		signatureFlag := byte(0x00)
 		data := append([]byte{signatureFlag}, secretKey...)
-		
+
 		words, err := bech32.ConvertBits(data, 8, 5, true)
 		if err != nil {
 			t.Fatal(err)
 		}
-		
+
 		value, err := bech32.Encode(ROOCH_SECRET_KEY_PREFIX, words)
 		if err != nil {
 			t.Fatal(err)
@@ -42,7 +42,7 @@ func TestDecodeRoochSecretKey(t *testing.T) {
 		secretKey := make([]byte, 32)
 		signatureFlag := byte(0x00)
 		data := append([]byte{signatureFlag}, secretKey...)
-		
+
 		words, _ := bech32.ConvertBits(data, 8, 5, true)
 		value, _ := bech32.Encode("invalidprefix", words)
 
@@ -58,8 +58,9 @@ func TestDecodeRoochSecretKey(t *testing.T) {
 func TestEncodeRoochSecretKey(t *testing.T) {
 	t.Run("should encode correctly when given a valid 32-byte private key with ED25519 scheme", func(t *testing.T) {
 		privateKey := bytes.Repeat([]byte{1}, 32)
-		scheme := "ED25519"
-		
+		//scheme := "ED25519"
+		scheme := Ed25519Scheme
+
 		encoded, err := EncodeRoochSecretKey(privateKey, scheme)
 		if err != nil {
 			t.Fatal(err)
@@ -76,8 +77,8 @@ func TestEncodeRoochSecretKey(t *testing.T) {
 
 	t.Run("should throw an error when the private key length is not 32 bytes", func(t *testing.T) {
 		invalidPrivateKey := make([]byte, 31)
-		scheme := "ED25519"
-		
+		scheme := Ed25519Scheme
+
 		_, err := EncodeRoochSecretKey(invalidPrivateKey, scheme)
 		if err == nil || err.Error() != "Invalid bytes length" {
 			t.Error("expected Invalid bytes length error")
@@ -85,4 +86,4 @@ func TestEncodeRoochSecretKey(t *testing.T) {
 	})
 
 	// Add more test cases similar to the TypeScript version...
-} 
+}

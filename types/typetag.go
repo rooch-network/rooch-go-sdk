@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"github.com/rooch-network/rooch-go-sdk/bcs"
+	"github.com/rooch-network/rooch-go-sdk/utils"
 	"strings"
 )
 
@@ -559,7 +560,7 @@ func StructTagToObjectID(st *StructTag) (ObjectID, error) {
 	//hash := sha3.New256()
 	//hash.Write([]byte(canonicalStr))
 	//return "0x" + hex.EncodeToString(hash.Sum(nil))
-	hash := Sha3256([]byte(canonicalStr))
+	hash := utils.Sha3256([]byte(canonicalStr))
 	address := "0x" + hex.EncodeToString(hash)
 	return ConvertObjectID(address)
 }

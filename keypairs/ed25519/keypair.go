@@ -94,12 +94,6 @@ func (k *Ed25519Keypair) GetRoochAddress() (*address.RoochAddress, error) {
 	return k.GetPublicKey().ToAddress()
 }
 
-// // GetPublicKey returns the public key for this Ed25519 keypair
-//
-//	func (k *Ed25519Keypair) GetPublicKey() []byte {
-//		return k.keypair.PublicKey
-//	}
-//
 // GetPublicKey returns the public key for this Ed25519 keypair
 func (k *Ed25519Keypair) GetPublicKey() crypto.PublicKey[address.RoochAddress] {
 	//return k.keypair.PublicKey
@@ -123,17 +117,17 @@ func (k *Ed25519Keypair) Sign(input []byte) ([]byte, error) {
 
 // SignTransaction signs a transaction and returns an authenticator
 func (k *Ed25519Keypair) SignTransaction(tx crypto.Transaction) (*crypto.Authenticator, error) {
-	//return AuthenticatorRooch(tx.HashData(), k)
 	// If you need to use types.Transaction internally:
-	if _typedTx, ok := tx.(*types.Transaction); ok {
+	if typesTx, ok := tx.(*types.Transaction); ok {
 		// Use typedTx here
-		return nil
+		hash, err := typesTx.HashData()
+		if err != nil {
+			return nil, err
+		}
+		return crypto.RoochAuthValidator(hash, k)
+	} else {
+		return nil, errors.New("invalid transaction")
 	}
-	hash, err := tx.HashData()
-	if err != nil {
-		return nil, err
-	}
-	return crypto.RoochAuthValidator(hash, k)
 }
 
 // DeriveKeypair derives Ed25519 keypair from mnemonics and path

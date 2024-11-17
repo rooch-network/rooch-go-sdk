@@ -3,8 +3,8 @@ package crypto
 import (
 	"bytes"
 	"crypto/ed25519"
-	"github.com/rooch-network/rooch-go-sdk/address"
 	"github.com/rooch-network/rooch-go-sdk/bcs"
+	"github.com/rooch-network/rooch-go-sdk/utils"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -18,7 +18,7 @@ func TestAuthenticationKey_FromPublicKey(t *testing.T) {
 	authKey := AuthenticationKey{}
 	authKey.FromPublicKey(publicKey)
 
-	hash := address.Sha3256Hash([][]byte{
+	hash := utils.Sha3256Hash([][]byte{
 		publicKey.Bytes(),
 		{Ed25519Scheme},
 	})

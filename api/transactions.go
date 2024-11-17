@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/rooch-network/rooch-go-sdk/address"
 	"github.com/rooch-network/rooch-go-sdk/types"
+	"github.com/rooch-network/rooch-go-sdk/utils"
 )
 
 // TransactionVariant is the type of transaction, all transactions submitted by this SDK are [TransactionVariantUser]
@@ -290,7 +291,7 @@ func (u *UnknownTransaction) TxnHash() Hash {
 // TxnVersion gives us the ledger version of the transaction. It will be nil if the transaction is not committed.
 func (u *UnknownTransaction) TxnVersion() *uint64 {
 	versionStr := u.Payload["version"].(string)
-	num, err := address.StrToUint64(versionStr)
+	num, err := utils.StrToUint64(versionStr)
 	if err != nil {
 		return nil
 	} else {

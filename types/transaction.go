@@ -61,7 +61,8 @@ const sendPrefix = "0000000000000000"
 //type Authenticator = Authenticator
 
 type Transaction struct {
-	Data          TransactionData      `json:"data"`
+	Data TransactionData `json:"data"`
+	//Data          crypto.TransactionData `json:"data"`
 	Authenticator crypto.Authenticator `json:"authenticator"`
 	Info          string               `json:"info"`
 }
@@ -77,6 +78,22 @@ func (t *Transaction) UnmarshalBCS(des *bcs.Deserializer) {
 	t.Info = des.ReadString()
 }
 
+// GetInfo returns the transaction info
+func (t *Transaction) GetInfo() *string {
+	return &t.Info
+}
+
+// HashData returns the hash of the transaction data
+func (t *Transaction) HashData() ([]byte, error) {
+	return t.Data.Hash()
+}
+
+// getData returns the transaction data after validation
+func (t *Transaction) GetData() crypto.TransactionData {
+	//t.isValid()
+	return &t.Data
+}
+
 //// CallFunction initializes the transaction with function call data
 //func (t *Transaction) CallFunction(input CallFunctionInput) {
 //	t.info = &input.Info
@@ -88,11 +105,6 @@ func (t *Transaction) UnmarshalBCS(des *bcs.Deserializer) {
 ////GetInfo() *string
 ////HashData() ([]byte, error)
 ////getData() *types.TransactionData
-
-// GetInfo returns the transaction info
-func (t *Transaction) GetInfo() *string {
-	return &t.Info
-}
 
 //// SetSender sets the sender address for the transaction
 //func (t *Transaction) SetSender(input types.Address) {
@@ -114,16 +126,16 @@ func (t *Transaction) GetInfo() *string {
 //	t.getData().SequenceNumber = input
 //}
 
-// HashData returns the hash of the transaction data
-func (t *Transaction) HashData() ([]byte, error) {
-	return t.Data.Hash()
-}
-
-// getData returns the transaction data after validation
-func (t *Transaction) getData() *TransactionData {
-	//t.isValid()
-	return &t.Data
-}
+//// HashData returns the hash of the transaction data
+//func (t *Transaction) HashData() ([]byte, error) {
+//	return t.Data.Hash()
+//}
+//
+//// getData returns the transaction data after validation
+//func (t *Transaction) getData() crypto.TransactionData {
+//	//t.isValid()
+//	return &t.Data
+//}
 
 //// isValid checks if the transaction data is initialized
 //func (t *Transaction) isValid() error {

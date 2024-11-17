@@ -1,8 +1,8 @@
 package crypto
 
 import (
-	"github.com/rooch-network/rooch-go-sdk/address"
 	"github.com/rooch-network/rooch-go-sdk/bcs"
+	"github.com/rooch-network/rooch-go-sdk/utils"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -16,7 +16,7 @@ const (
 )
 
 func TestSecp256k1Keys(t *testing.T) {
-	testSecp256k1PrivateKeyBytes, err := address.ParseHex(testSecp256k1PrivateKey)
+	testSecp256k1PrivateKeyBytes, err := utils.ParseHex(testSecp256k1PrivateKey)
 	assert.NoError(t, err)
 
 	// Either bytes or hex should work
@@ -37,7 +37,7 @@ func TestSecp256k1Keys(t *testing.T) {
 	assert.Equal(t, testSecp256k1Address, singleSender.AuthKey().ToHex())
 
 	// Test signature
-	message, err := address.ParseHex(testSecp256k1MessageEncoded)
+	message, err := utils.ParseHex(testSecp256k1MessageEncoded)
 	assert.NoError(t, err)
 	signature, err := privateKey.SignMessage(message)
 	assert.NoError(t, err)
@@ -68,7 +68,7 @@ func TestSecp256k1Keys(t *testing.T) {
 	// Verify serialization of public key
 	publicKeyBytes, err := bcs.Serialize(publicKey)
 	assert.NoError(t, err)
-	expectedPublicKeyBytes, err := address.ParseHex(testSecp256k1PublicKey)
+	expectedPublicKeyBytes, err := utils.ParseHex(testSecp256k1PublicKey)
 	assert.NoError(t, err)
 	// Need to prepend the length
 	expectedBcsPublicKeyBytes := []byte{Secp256k1PublicKeyLength}

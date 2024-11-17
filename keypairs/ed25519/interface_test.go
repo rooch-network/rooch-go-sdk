@@ -1,6 +1,7 @@
 package ed25519
 
 import (
+	"errors"
 	"github.com/rooch-network/rooch-go-sdk/address"
 	"github.com/rooch-network/rooch-go-sdk/types"
 )
@@ -22,46 +23,45 @@ func (pk *Ed25519PublicKeyTest) ToAddress() (*address.RoochAddress, error) {
 
 type Transaction interface {
 	HashData() ([]byte, error)
-	//SetAuthenticator(*Authenticator)
 }
 
 // Signer a generic interface for any kind of signing
 type SignerTest interface {
-	// PubKey Retrieve the [PublicKey] for [Signature] verification
 	GetPublicKey() PublicKeyTest[address.RoochAddress]
 
-	SignTransaction(tx *Transaction) error
+	SignTransaction(tx Transaction) (*AuthenticatorTest, error)
+}
+
+type AuthenticatorTest struct {
+	AuthValidatorId uint64 `json:"auth_validator_id"`
+	Payload         []byte `json:"payload"`
 }
 
 type Ed25519KeypairTest struct {
 }
 
-//func (k *Ed25519KeypairTest) SignTransaction(tx *Transaction) error {
-//	//TODO implement me
-//	panic("implement me")
-//}
-
-//	func (k *Ed25519KeypairTest) GetPublicKey() PublicKeyTest[address.RoochAddress] {
-//		//return k.keypair.PublicKey
-//		return &Ed25519PublicKeyTest{}
-//	}
 func (k *Ed25519KeypairTest) GetPublicKey() PublicKeyTest[address.RoochAddress] {
 	return &Ed25519PublicKeyTest{}
 }
 
-func (k *Ed25519KeypairTest) SignTransaction(tx *Transaction) error {
+func (k *Ed25519KeypairTest) SignTransaction(tx Transaction) (*AuthenticatorTest, error) {
 	// If you need to use types.Transaction internally:
-	if _typedTx, ok := tx.(*types.Transaction); ok {
+	if typedTx, ok := tx.(*types.Transaction); ok {
 		// Use typedTx here
-		return nil
+		hash, err := typedTx.HashData()
+		if err != nil {
+			return nil, err
+		}
+		return RoochAuthValidatorTest(hash, k)
+	} else {
+		return nil, errors.New("invalid transaction")
 	}
-	return nil
 }
 
-func RoochAuthValidatorTest(input []byte, signer SignerTest) error {
-	return nil
+func RoochAuthValidatorTest(input []byte, signer SignerTest) (*AuthenticatorTest, error) {
+	return &AuthenticatorTest{}, nil
 }
 
-func (k *Ed25519KeypairTest) SignTransactionTest() error {
-	return RoochAuthValidatorTest([]byte{}, k)
-}
+//func (k *Ed25519KeypairTest) SignTransactionTest() (*AuthenticatorTest, error) {
+//	return RoochAuthValidatorTest([]byte{}, k)
+//}

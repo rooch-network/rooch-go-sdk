@@ -94,7 +94,7 @@ func (pk *Ed25519PublicKey) ToBase64() string {
 }
 
 func (pk *Ed25519PublicKey) ToHex() string {
-	return address.BytesToHex(pk.ToBytes())
+	return utils.BytesToHex(pk.ToBytes())
 }
 
 // // FromHex sets the [Ed25519PublicKey] to the bytes represented by the hex string, with or without a leading 0x
@@ -104,7 +104,7 @@ func (pk *Ed25519PublicKey) ToHex() string {
 // // Implements:
 // //   - [CryptoMaterial]
 func (pk *Ed25519PublicKey) FromHex(hexStr string) (err error) {
-	bytes, err := address.ParseHex(hexStr)
+	bytes, err := utils.ParseHex(hexStr)
 	if err != nil {
 		return err
 	}

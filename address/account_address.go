@@ -6,6 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/rooch-network/rooch-go-sdk/bcs"
+	"github.com/rooch-network/rooch-go-sdk/utils"
+
 	//"github.com/rooch-network/rooch-go-sdk/crypto"
 	"strings"
 )
@@ -63,7 +65,7 @@ func (aa *AccountAddress) String() string {
 	if aa.IsSpecial() {
 		return fmt.Sprintf("0x%x", aa[31])
 	} else {
-		return BytesToHex(aa[:])
+		return utils.BytesToHex(aa[:])
 	}
 }
 
@@ -83,7 +85,7 @@ func (aa *AccountAddress) String() string {
 //
 // This is most commonly used for all indexer queries.
 func (aa *AccountAddress) StringLong() string {
-	return BytesToHex(aa[:])
+	return utils.BytesToHex(aa[:])
 }
 
 // MarshalBCS Converts the AccountAddress to BCS encoded bytes

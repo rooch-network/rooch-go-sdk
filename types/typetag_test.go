@@ -55,12 +55,12 @@ func checkVariant[T TypeTagImpl](t *testing.T, tag T, expectedType TypeTagVarian
 
 func TestStructTag(t *testing.T) {
 	st := StructTag{
-		Address: AccountOne,
+		Address: AddressOne,
 		Module:  "coin",
 		Name:    "CoinStore",
 		TypeParams: []TypeTag{
 			{Value: &StructTag{
-				Address:    AccountOne,
+				Address:    AddressOne,
 				Module:     "gas_coin",
 				Name:       "RGas",
 				TypeParams: nil,

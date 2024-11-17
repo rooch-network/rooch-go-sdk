@@ -154,7 +154,7 @@ func ArgAddress(input interface{}) (*Args, error) {
 	//serialized := Address{}.Serialize(input)
 	//return NewArgs(serialized)
 
-	roochAddress, err := address.ConvertToRoochAddress(input)
+	roochAddress, err := address.NewRoochAddress(input)
 	if err != nil {
 		return nil, err
 	}
@@ -256,7 +256,7 @@ func ArgVec(argType ArgType, input interface{}) (*Args, error) {
 		ids := input.([]interface{})
 		addresses := make([]RoochAddress, len(ids))
 		for i, id := range ids {
-			address, err := address.ConvertToRoochAddress(id)
+			address, err := address.NewRoochAddress(id)
 			if err != nil {
 				return nil, err
 			}

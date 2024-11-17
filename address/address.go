@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"github.com/btcsuite/btcd/btcutil/bech32"
 	"github.com/rooch-network/rooch-go-sdk/bcs"
+	"github.com/rooch-network/rooch-go-sdk/utils"
 	"strings"
 )
 
@@ -100,7 +101,7 @@ func (ra *RoochAddress) String() string {
 //
 // This is most commonly used for all indexer queries.
 func (ra *RoochAddress) StringLong() string {
-	return BytesToHex(ra.address[:])
+	return utils.BytesToHex(ra.address[:])
 }
 
 // MarshalBCS Converts the RoochAddress to BCS encoded bytes

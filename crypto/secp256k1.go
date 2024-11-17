@@ -4,8 +4,8 @@ import (
 	"crypto/ecdsa"
 	"fmt"
 	ethCrypto "github.com/ethereum/go-ethereum/crypto"
-	"github.com/rooch-network/rooch-go-sdk/address"
 	"github.com/rooch-network/rooch-go-sdk/bcs"
+	"github.com/rooch-network/rooch-go-sdk/utils"
 )
 
 //region Secp256k1PrivateKey
@@ -66,7 +66,7 @@ func (key *Secp256k1PrivateKey) EmptySignature() Signature {
 // Implements:
 //   - [MessageSigner]
 func (key *Secp256k1PrivateKey) SignMessage(msg []byte) (sig Signature, err error) {
-	hash := address.Sha3256Hash([][]byte{msg})
+	hash := utils.Sha3256Hash([][]byte{msg})
 	// TODO: The eth library doesn't protect against malleability issues, so we need to handle those.
 	signature, err := ethCrypto.Sign(hash, key.Inner)
 	if err != nil {
@@ -114,7 +114,7 @@ func (key *Secp256k1PrivateKey) FromBytes(bytes []byte) (err error) {
 // Implements:
 //   - [CryptoMaterial]
 func (key *Secp256k1PrivateKey) ToHex() string {
-	return address.BytesToHex(key.Bytes())
+	return utils.BytesToHex(key.Bytes())
 }
 
 //endregion
@@ -126,7 +126,7 @@ func (key *Secp256k1PrivateKey) ToHex() string {
 // Implements:
 //   - [CryptoMaterial]
 func (key *Secp256k1PrivateKey) FromHex(hexStr string) (err error) {
-	bytes, err := address.ParseHex(hexStr)
+	bytes, err := utils.ParseHex(hexStr)
 	if err != nil {
 		return err
 	}
@@ -163,7 +163,7 @@ func (key *Secp256k1PublicKey) Verify(msg []byte, sig Signature) bool {
 	switch sig := sig.(type) {
 	case *Secp256k1Signature:
 		// Verification requires to pass the SHA-256 hash of the message
-		msg = address.Sha3256Hash([][]byte{msg})
+		msg = utils.Sha3256Hash([][]byte{msg})
 		return ethCrypto.VerifySignature(key.Bytes(), msg, sig.Bytes())
 	default:
 		return false
@@ -200,7 +200,7 @@ func (key *Secp256k1PublicKey) FromBytes(bytes []byte) (err error) {
 // Implements:
 //   - [CryptoMaterial]
 func (key *Secp256k1PublicKey) ToHex() string {
-	return address.BytesToHex(key.Bytes())
+	return utils.BytesToHex(key.Bytes())
 }
 
 // FromHex sets the [Secp256k1PublicKey] to the bytes represented by the hex string, with or without a leading 0x
@@ -208,7 +208,7 @@ func (key *Secp256k1PublicKey) ToHex() string {
 // Implements:
 //   - [CryptoMaterial]
 func (key *Secp256k1PublicKey) FromHex(hexStr string) (err error) {
-	bytes, err := address.ParseHex(hexStr)
+	bytes, err := utils.ParseHex(hexStr)
 	if err != nil {
 		return err
 	}
@@ -358,7 +358,7 @@ func (e *Secp256k1Signature) FromBytes(bytes []byte) (err error) {
 // Implements:
 //   - [CryptoMaterial]
 func (e *Secp256k1Signature) ToHex() string {
-	return address.BytesToHex(e.Bytes())
+	return utils.BytesToHex(e.Bytes())
 }
 
 // FromHex sets the [Secp256k1Signature] to the bytes represented by the hex string, with or without a leading 0x
@@ -368,7 +368,7 @@ func (e *Secp256k1Signature) ToHex() string {
 // Implements:
 //   - [CryptoMaterial]
 func (e *Secp256k1Signature) FromHex(hexStr string) (err error) {
-	bytes, err := address.ParseHex(hexStr)
+	bytes, err := utils.ParseHex(hexStr)
 	if err != nil {
 		return err
 	}

@@ -2,7 +2,7 @@ package api
 
 import (
 	"encoding/json"
-	"github.com/rooch-network/rooch-go-sdk/address"
+	"github.com/rooch-network/rooch-go-sdk/utils"
 )
 
 // GUID describes a GUID associated with things like V1 events
@@ -40,7 +40,7 @@ func (u *U64) UnmarshalJSON(b []byte) error {
 	if err != nil {
 		return err
 	}
-	uv, err := address.StrToUint64(str)
+	uv, err := utils.StrToUint64(str)
 	if err != nil {
 		return err
 	}
@@ -69,7 +69,7 @@ func (u *HexBytes) UnmarshalJSON(b []byte) error {
 	if err != nil {
 		return err
 	}
-	bytes, err := address.ParseHex(str)
+	bytes, err := utils.ParseHex(str)
 	if err != nil {
 		return err
 	}
