@@ -55,8 +55,8 @@ func (fi *FunctionId) UnmarshalBCS(des *bcs.Deserializer) {
 //type Args interface{}
 //type TypeTag interface{}
 //
-//// CallScript represents a script to be executed
-//type CallScript struct {
+//// ScriptCall represents a script to be executed
+//type ScriptCall struct {
 //	Code     string     `json:"code"`
 //	Args     []api.Args `json:"args"`
 //	TypeArgs []TypeTag  `json:"typeArgs"`
@@ -94,16 +94,16 @@ func (fi *FunctionId) UnmarshalBCS(des *bcs.Deserializer) {
 //	}, nil
 //}
 //
-//// CallFunctionArgs represents arguments for calling a function
-//type CallFunctionArgs struct {
+//// FunctionCallArgs represents arguments for calling a function
+//type FunctionCallArgs struct {
 //	*FunctionArgs            // Embed FunctionArgs
 //	Args          []api.Args `json:"args,omitempty"`
 //	TypeArgs      []TypeTag  `json:"typeArgs,omitempty"`
 //}
 //
-//// NewCallFunctionArgs creates a new CallFunctionArgs instance
-//func NewCallFunctionArgs(funcArgs *FunctionArgs, args []api.Args, typeArgs []TypeTag) *CallFunctionArgs {
-//	return &CallFunctionArgs{
+//// NewFunctionCallArgs creates a new FunctionCallArgs instance
+//func NewFunctionCallArgs(funcArgs *FunctionArgs, args []api.Args, typeArgs []TypeTag) *FunctionCallArgs {
+//	return &FunctionCallArgs{
 //		FunctionArgs: funcArgs,
 //		Args:         args,
 //		TypeArgs:     typeArgs,

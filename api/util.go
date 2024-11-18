@@ -99,3 +99,8 @@ func SplitGenericParameters(str string) []string {
 
 	return result
 }
+
+//func Str2Uint64(str string) (uint64, error) {
+//	i, err := strconv.ParseInt(str, 10, 64)
+//	return uint64(i), err
+//}

@@ -3,18 +3,18 @@ package client
 import (
 	"encoding/hex"
 	"errors"
+	"github.com/rooch-network/rooch-go-sdk/api"
+	client "github.com/rooch-network/rooch-go-sdk/client/types"
 	"github.com/rooch-network/rooch-go-sdk/crypto"
-	transactions2 "github.com/rooch-network/rooch-go-sdk/types/transactions"
-	"math/big"
+	"github.com/rooch-network/rooch-go-sdk/types"
+	"github.com/rooch-network/rooch-go-sdk/utils"
 
 	"github.com/rooch-network/rooch-go-sdk/address"
-	"github.com/rooch-network/rooch-go-sdk/session"
-	"github.com/rooch-network/rooch-go-sdk/transactions"
-	"github.com/rooch-network/rooch-go-sdk/types"
+	//"github.com/rooch-network/rooch-go-sdk/session"
 )
 
 type RoochClient struct {
-	chainID   *big.Int
+	chainID   uint64
 	transport RoochTransport
 }
 
@@ -29,7 +29,11 @@ func NewRoochClient(options RoochClientOptions) *RoochClient {
 	if options.Transport != nil {
 		transport = options.Transport
 	} else {
-		transport = NewRoochHTTPTransport(options.URL)
+		transportOptions := RoochHTTPTransportOptions{
+			URL:     options.URL,
+			Headers: nil,
+		}
+		transport = NewRoochHTTPTransport(transportOptions)
 	}
 
 	return &RoochClient{
@@ -48,30 +52,30 @@ func (c *RoochClient) GetRpcApiVersion() (string, error) {
 	return resp.Info.Version, err
 }
 
-func (c *RoochClient) GetChainId() (*big.Int, error) {
-	if c.chainID != nil {
+func (c *RoochClient) GetChainId() (uint64, error) {
+	if c.chainID != 0 {
 		return c.chainID, nil
 	}
 
 	var result string
 	err := c.transport.Request("rooch_getChainID", nil, &result)
 	if err != nil {
-		return nil, err
+		return 0, err
 	}
 
-	chainID, ok := new(big.Int).SetString(result, 10)
-	if !ok {
-		return nil, errors.New("invalid chain ID format")
+	chainID, err := utils.Str2Uint64(result)
+	if err != nil {
+		return 0, errors.New("invalid chain ID format")
 	}
 
 	c.chainID = chainID
 	return chainID, nil
 }
 
-func (c *RoochClient) ExecuteViewFunction(input transactions2.CallFunctionArgs) (*types.AnnotatedFunctionResultView, error) {
-	callFunction := transactions.NewCallFunction(input)
+func (c *RoochClient) ExecuteViewFunction(input api.CallFunctionArgs) (*client.AnnotatedFunctionResultView, error) {
+	callFunction := api.CallFunctionArgs(input)
 
-	var result types.AnnotatedFunctionResultView
+	var result client.AnnotatedFunctionResultView
 	err := c.transport.Request("rooch_executeViewFunction", []interface{}{
 		map[string]interface{}{
 			"function_id": callFunction.FunctionId(),
@@ -152,7 +156,7 @@ func (c *RoochClient) QueryInscriptions(params QueryInscriptionsParams) (*types.
 
 func (c *RoochClient) Transfer(params TransferParams) (*types.ExecuteTransactionResponseView, error) {
 	tx := transactions.NewTransaction()
-	tx.CallFunction(transactions2.CallFunctionArgs{
+	tx.CallFunction(api.CallFunctionArgs{
 		Target:   "0x3::transfer::transfer_coin",
 		Args:     []interface{}{params.Recipient, params.Amount},
 		TypeArgs: []string{types.NormalizeTypeArgsToStr(params.CoinType)},
@@ -170,7 +174,7 @@ func (c *RoochClient) Transfer(params TransferParams) (*types.ExecuteTransaction
 
 func (c *RoochClient) TransferObject(params TransferObjectParams) (*types.ExecuteTransactionResponseView, error) {
 	tx := transactions.NewTransaction()
-	tx.CallFunction(transactions2.CallFunctionArgs{
+	tx.CallFunction(api.CallFunctionArgs{
 		Target:   "0x3::transfer::transfer_object",
 		Args:     []interface{}{params.Recipient, params.ObjectID},
 		TypeArgs: []string{types.NormalizeTypeArgsToStr(params.ObjectType)},
@@ -187,7 +191,7 @@ func (c *RoochClient) TransferObject(params TransferObjectParams) (*types.Execut
 }
 
 func (c *RoochClient) ResolveBTCAddress(roochAddr string, network address.BitcoinNetworkType) (*address.BitcoinAddress, error) {
-	result, err := c.ExecuteViewFunction(transactions2.CallFunctionArgs{
+	result, err := c.ExecuteViewFunction(api.CallFunctionArgs{
 		Target: "0x3::address_mapping::resolve_bitcoin",
 		Args:   []interface{}{roochAddr},
 	})
@@ -221,7 +225,7 @@ func (c *RoochClient) RemoveSession(authKey string, signer crypto.Signer) (bool,
 	}
 
 	tx := transactions.NewTransaction()
-	tx.CallFunction(transactions2.CallFunctionArgs{
+	tx.CallFunction(api.CallFunctionArgs{
 		Target: "0x3::session_key::remove_session_key_entry",
 		Args:   []interface{}{authKeyBytes},
 	})
@@ -240,5 +244,3 @@ func (c *RoochClient) RemoveSession(authKey string, signer crypto.Signer) (bool,
 
 	return resp.ExecutionInfo.Status.Type == "executed", nil
 }
-
-// ... continuing with more methods ...

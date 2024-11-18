@@ -1,10 +1,10 @@
 package api
 
 import (
-	"encoding/hex"
 	"github.com/rooch-network/rooch-go-sdk/address"
 	"github.com/rooch-network/rooch-go-sdk/bcs"
 	"github.com/rooch-network/rooch-go-sdk/types"
+	"github.com/rooch-network/rooch-go-sdk/utils"
 	"math/big"
 )
 
@@ -35,9 +35,8 @@ func NewArgs(input []byte) *Args {
 	return &Args{value: input}
 }
 
-// Consistent with JS encodeWithHex()
 func (a *Args) EncodeWithHex() string {
-	return "0x" + hex.EncodeToString(a.value)
+	return utils.BytesToHex(a.value)
 }
 
 // Consistent with JS encode()

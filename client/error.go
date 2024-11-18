@@ -34,7 +34,7 @@ var codeToErrorType = map[int]string{
 	1010: "InvalidAuthenticator",
 	1011: "NotInstalledAuthValidator",
 	1012: "SessionIsExpired",
-	1013: "CallFunctionBeyondSessionScop",
+	1013: "FunctionCallBeyondSessionScop",
 }
 
 // RoochHTTPTransportError represents a base error type for Rooch HTTP transport

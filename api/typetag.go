@@ -6,7 +6,7 @@ import (
 	"github.com/rooch-network/rooch-go-sdk/types"
 )
 
-func ParseStructTypeArgs(str string, normalizeAddress bool) ([]types.TypeTag, error) {
+func ParseTypeTagArgs(str string, normalizeAddress bool) ([]types.TypeTag, error) {
 	tokens := SplitGenericParameters(str)
 	result := make([]types.TypeTag, len(tokens))
 	for i, token := range tokens {
@@ -62,7 +62,7 @@ func ParseTypeTagFromStr(str string, normalizeAddress bool) (types.TypeTag, erro
 
 		var typeParams []types.TypeTag
 		if matches[5] != "" {
-			parsedTypeParams, err := ParseStructTypeArgs(matches[5], normalizeAddress)
+			parsedTypeParams, err := ParseTypeTagArgs(matches[5], normalizeAddress)
 			if err != nil {
 				return types.TypeTag{}, err
 			}
