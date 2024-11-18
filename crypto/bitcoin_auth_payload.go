@@ -5,7 +5,7 @@ import "github.com/rooch-network/rooch-go-sdk/bcs"
 type BitcoinAuthPayload struct {
 	Signature     []byte
 	MessagePrefix []byte
-	MessageInfo   string
+	MessageInfo   []byte
 	PublicKey     []byte
 	FromAddress   []byte
 }
@@ -13,7 +13,7 @@ type BitcoinAuthPayload struct {
 func (bap *BitcoinAuthPayload) MarshalBCS(ser *bcs.Serializer) {
 	ser.WriteBytes(bap.Signature)
 	ser.WriteBytes(bap.MessagePrefix)
-	ser.WriteString(bap.MessageInfo)
+	ser.WriteBytes(bap.MessageInfo)
 	ser.WriteBytes(bap.PublicKey)
 	ser.WriteBytes(bap.FromAddress)
 }
@@ -21,7 +21,7 @@ func (bap *BitcoinAuthPayload) MarshalBCS(ser *bcs.Serializer) {
 func (bap *BitcoinAuthPayload) UnmarshalBCS(des *bcs.Deserializer) {
 	bap.Signature = des.ReadBytes()
 	bap.MessagePrefix = des.ReadBytes()
-	bap.MessageInfo = des.ReadString()
+	bap.MessageInfo = des.ReadBytes()
 	bap.PublicKey = des.ReadBytes()
 	bap.FromAddress = des.ReadBytes()
 }

@@ -1,7 +1,6 @@
 package types
 
 import (
-	"encoding/hex"
 	"fmt"
 	"github.com/rooch-network/rooch-go-sdk/bcs"
 	"github.com/rooch-network/rooch-go-sdk/utils"
@@ -371,10 +370,11 @@ func (xt *VectorTag) UnmarshalBCS(des *bcs.Deserializer) {
 
 // StructTag represents an on-chain struct of the form address::module::name<T1,T2,...> and each T is a [TypeTag]
 type StructTag struct {
-	Address    RoochAddress // Address is the address of the module
-	Module     string       // Module is the name of the module
-	Name       string       // Name is the name of the struct
-	TypeParams []TypeTag    // TypeParams are the TypeTags of the type parameters
+	Address RoochAddress // Address is the address of the module
+	//Address    string    // Address is the address of the module
+	Module     string    // Module is the name of the module
+	Name       string    // Name is the name of the struct
+	TypeParams []TypeTag // TypeParams are the TypeTags of the type parameters
 }
 
 //region StructTag TypeTagImpl
@@ -386,23 +386,16 @@ func (xt *StructTag) GetType() TypeTagVariant {
 // String outputs to the form address::module::name<type1, type2> e.g.
 // 0x1::string::String or 0x42::my_mod::MultiType<u8,0x1::string::String>
 func (xt *StructTag) String() string {
-	out := strings.Builder{}
-	out.WriteString(xt.Address.String())
-	out.WriteString("::")
-	out.WriteString(xt.Module)
-	out.WriteString("::")
-	out.WriteString(xt.Name)
-	if len(xt.TypeParams) != 0 {
-		out.WriteRune('<')
-		for i, tp := range xt.TypeParams {
-			if i != 0 {
-				out.WriteRune(',')
-			}
-			out.WriteString(tp.String())
-		}
-		out.WriteRune('>')
+	typeParams := make([]string, len(xt.TypeParams))
+	for i, tp := range xt.TypeParams {
+		typeParams[i] = tp.String()
 	}
-	return out.String()
+	typeParamsStr := ""
+	if len(typeParams) > 0 {
+		typeParamsStr = fmt.Sprintf("<%s>", strings.Join(typeParams, ", "))
+	}
+	return fmt.Sprintf("%s::%s::%s%s", xt.Address.String(), xt.Module, xt.Name, typeParamsStr)
+
 }
 
 // String outputs to the form address::module::name<type1, type2> e.g.
@@ -561,8 +554,32 @@ func StructTagToObjectID(st *StructTag) (ObjectID, error) {
 	//hash.Write([]byte(canonicalStr))
 	//return "0x" + hex.EncodeToString(hash.Sum(nil))
 	hash := utils.Sha3256([]byte(canonicalStr))
-	address := "0x" + hex.EncodeToString(hash)
+	address := utils.BytesToHex(hash)
 	return ConvertObjectID(address)
 }
+
+//func (s *Serializer) StructTagToObjectID(input StructTag) string {
+//	return "0x" + utils.ToHex(utils.Sha3256(s.StructTagToCanonicalString(input)))
+//}
+
+//func (s *Serializer) TypeTagToString(input TypeTag) string {
+//	if str, ok := input.(string); ok {
+//		return str
+//	}
+//
+//	if vector, ok := input.(map[string]TypeTag); ok {
+//		if val, exists := vector["Vector"]; exists {
+//			return fmt.Sprintf("vector<%s>", s.TypeTagToString(val))
+//		}
+//	}
+//
+//	if structTag, ok := input.(map[string]StructTag); ok {
+//		if val, exists := structTag["Struct"]; exists {
+//			return s.StructTagToCanonicalString(val)
+//		}
+//	}
+//
+//	panic("Invalid TypeTag")
+//}
 
 //endregion

@@ -180,7 +180,7 @@ func BitcoinAuthValidator(input *BitcoinSignMessage, signer Signer[address.Addre
 			[]byte(input.messagePrefix),
 			utils.VarintByteNum(uint64(messageLength)),
 		}, []byte{}),
-		MessageInfo: input.messageInfo,
+		MessageInfo: []byte(input.messageInfo),
 		PublicKey:   signer.GetPublicKey().ToBytes(),
 		FromAddress: bitcoin_address.ToBytes(),
 	}

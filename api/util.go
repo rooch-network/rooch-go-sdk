@@ -3,32 +3,9 @@ package api
 import (
 	"encoding/json"
 	"github.com/rooch-network/rooch-go-sdk/utils"
+	"regexp"
+	"strings"
 )
-
-// GUID describes a GUID associated with things like V1 events
-//
-// Note that this can only be used to deserialize events in the `events` field, and not the `GUID` resource in `changes`.
-type GUID struct {
-	CreationNumber uint64                // CreationNumber is the number of the GUID
-	AccountAddress *types.AccountAddress // AccountAddress is the account address of the creator of the GUID
-}
-
-// UnmarshalJSON deserializes a JSON data blob into a [GUIDId]
-func (o *GUID) UnmarshalJSON(b []byte) error {
-	type inner struct {
-		CreationNumber U64                   `json:"creation_number"`
-		AccountAddress *types.AccountAddress `json:"account_address"`
-	}
-
-	data := &inner{}
-	err := json.Unmarshal(b, &data)
-	if err != nil {
-		return err
-	}
-	o.AccountAddress = data.AccountAddress
-	o.CreationNumber = data.CreationNumber.ToUint64()
-	return nil
-}
 
 // U64 is a type for handling JSON string representations of the uint64
 type U64 uint64
@@ -85,3 +62,40 @@ func (u *HexBytes) UnmarshalJSON(b []byte) error {
 //
 //	0xf4d07fdb8b5151971886a910e516d418a790dd5f6e068b0588066518a395a600
 type Hash = string // TODO: do we make this a 32 byte array? or byte array?
+
+var (
+	VectorRegex = regexp.MustCompile(`^vector<(.+)>$`)
+	StructRegex = regexp.MustCompile(`^([^:]+)::([^:]+)::([^<]+)(<(.+)>)?`)
+)
+
+func SplitGenericParameters(str string) []string {
+	var result []string
+	var current string
+	var depth int
+
+	for _, char := range str {
+		switch char {
+		case '<':
+			depth++
+			current += string(char)
+		case '>':
+			depth--
+			current += string(char)
+		case ',':
+			if depth == 0 {
+				result = append(result, strings.TrimSpace(current))
+				current = ""
+			} else {
+				current += string(char)
+			}
+		default:
+			current += string(char)
+		}
+	}
+
+	if current != "" {
+		result = append(result, strings.TrimSpace(current))
+	}
+
+	return result
+}

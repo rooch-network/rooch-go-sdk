@@ -197,10 +197,10 @@ func (ba *BitcoinAddress) ToBytes() []byte {
 	return []byte(ba.rawAddress)
 }
 
-type MultiChainAddress struct {
-	MultiChainID int
-	RawAddress   []byte
-}
+//type MultiChainAddress struct {
+//	MultiChainID int
+//	RawAddress   []byte
+//}
 
 // GenMultiChainAddress generates a multi-chain address
 func (ba *BitcoinAddress) GenMultiChainAddress() []byte {

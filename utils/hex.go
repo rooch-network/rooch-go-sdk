@@ -58,4 +58,44 @@ func FromHEX(input string) []uint8 {
 // ToHEX converts a byte array to a hex string.
 func ToHEX(input []uint8) (string, error) {
 	return hex.EncodeToString(input), nil
-} 
+}
+
+func HexToBytes(h string) ([]byte, error) {
+	var bs []byte
+	var err error
+	if !strings.HasPrefix(h, "0x") {
+		bs, err = hex.DecodeString(h)
+	} else {
+		bs, err = hex.DecodeString(h[2:])
+	}
+	if err != nil {
+		return nil, err
+	}
+	return bs, nil
+}
+
+func HexTo4Uint8(h string) ([4]uint8, error) {
+	var us [4]uint8
+	bs, err := HexToBytes(h)
+	if err != nil {
+		return us, err
+	}
+	copy(us[:], bs[:4])
+	return us, nil
+}
+
+func HexTo32Uint8(h string) ([32]uint8, error) {
+	var us [32]uint8
+
+	bs, err := HexToBytes(h)
+	if err != nil {
+		return us, err
+	}
+
+	if len(bs) > 32 {
+		copy(us[:], bs[:32])
+	} else {
+		copy(us[:], bs[:])
+	}
+	return us, nil
+}

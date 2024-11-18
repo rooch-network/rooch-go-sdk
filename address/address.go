@@ -383,3 +383,8 @@ func toHex(b []byte) string {
 func BytesEqual(a, b []byte) bool {
 	return bytes.Equal(a, b)
 }
+
+type MultiChainAddress struct {
+	MultiChainID int
+	RawAddress   []byte
+}

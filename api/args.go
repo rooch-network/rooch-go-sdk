@@ -1,9 +1,10 @@
-package types
+package api
 
 import (
 	"encoding/hex"
 	"github.com/rooch-network/rooch-go-sdk/address"
 	"github.com/rooch-network/rooch-go-sdk/bcs"
+	"github.com/rooch-network/rooch-go-sdk/types"
 	"math/big"
 )
 
@@ -166,8 +167,8 @@ func ArgAddress(input interface{}) (*Args, error) {
 }
 
 // Consistent with JS static object()
-func ArgObject(input StructTag) (*Args, error) {
-	objectID, err := StructTagToObjectID(&input)
+func ArgObject(input types.StructTag) (*Args, error) {
+	objectID, err := types.StructTagToObjectID(&input)
 	if err != nil {
 		return nil, err
 	}
@@ -180,7 +181,7 @@ func ArgObject(input StructTag) (*Args, error) {
 
 // Consistent with JS static ObjectID()
 func ArgObjectID(input string) (*Args, error) {
-	objectID, err := ConvertObjectID(input)
+	objectID, err := types.ConvertObjectID(input)
 	if err != nil {
 		return nil, err
 	}
@@ -198,9 +199,9 @@ func ArgStruct(input interface{}) (*Args, error) {
 	switch v := input.(type) {
 	case []byte:
 		bytes = v
-	case StructTag:
+	case types.StructTag:
 		ser := &bcs.Serializer{}
-		struct_tag := input.(StructTag)
+		struct_tag := input.(types.StructTag)
 		struct_tag.MarshalBCS(ser)
 		bytes = ser.ToBytes()
 	}
@@ -230,10 +231,10 @@ func ArgVec(argType ArgType, input interface{}) (*Args, error) {
 	case ArgTypeString:
 		bcs.SerializeSequence(input.([]string), ser)
 	case ArgTypeObject:
-		structTags := input.([]StructTag)
-		objectIDs := make([]ObjectID, len(structTags))
+		structTags := input.([]types.StructTag)
+		objectIDs := make([]types.ObjectID, len(structTags))
 		for i, tag := range structTags {
-			obj_id, err := StructTagToObjectID(&tag)
+			obj_id, err := types.StructTagToObjectID(&tag)
 			if err != nil {
 				return nil, err
 			}
@@ -242,9 +243,9 @@ func ArgVec(argType ArgType, input interface{}) (*Args, error) {
 		bcs.SerializeSequence(objectIDs, ser)
 	case ArgTypeObjectID:
 		ids := input.([]interface{})
-		objectIDs := make([]ObjectID, len(ids))
+		objectIDs := make([]types.ObjectID, len(ids))
 		for i, id := range ids {
-			obj_id, err := ConvertObjectID(id)
+			obj_id, err := types.ConvertObjectID(id)
 			if err != nil {
 				return nil, err
 			}
@@ -254,7 +255,7 @@ func ArgVec(argType ArgType, input interface{}) (*Args, error) {
 	case ArgTypeAddress:
 		//bcs.SerializeSequence(Address{}.SerializeVec(input.([]string)), ser)
 		ids := input.([]interface{})
-		addresses := make([]RoochAddress, len(ids))
+		addresses := make([]types.RoochAddress, len(ids))
 		for i, id := range ids {
 			address, err := address.NewRoochAddress(id)
 			if err != nil {
