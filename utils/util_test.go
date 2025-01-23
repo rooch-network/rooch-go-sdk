@@ -1,23 +1,22 @@
 package utils
 
 import (
-	"github.com/rooch-network/rooch-go-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"math/big"
 	"testing"
 )
 
-var testConfig = LocalnetConfig
+//var testConfig = LocalnetConfig
 
 // createTestClient to use for testing for only one place to configure the network
 // TODO: Allow overrides with environment variable?
-func createTestClient() (*Client, error) {
-	return NewClient(testConfig)
-}
+//func createTestClient() (*Client, error) {
+//	return NewClient(testConfig)
+//}
 
 func TestSHA3_256Hash(t *testing.T) {
 	input := [][]byte{{0x1}, {0x2}, {0x3}}
-	expected, err := types.ParseHex("fd1780a6fc9ee0dab26ceb4b3941ab03e66ccd970d1db91612c66df4515b0a0a")
+	expected, err := ParseHex("fd1780a6fc9ee0dab26ceb4b3941ab03e66ccd970d1db91612c66df4515b0a0a")
 	assert.NoError(t, err)
 	assert.Equal(t, expected, Sha3256Hash(input))
 }
@@ -28,7 +27,7 @@ func TestParseHex(t *testing.T) {
 	expected := [][]byte{{0x01, 0x23, 0x45}, {0x01, 0x23, 0x45}, {}}
 
 	for i, input := range inputs {
-		val, err := types.ParseHex(input)
+		val, err := ParseHex(input)
 		assert.NoError(t, err)
 		assert.Equal(t, expected[i], val)
 	}
@@ -39,7 +38,7 @@ func TestBytesToHex(t *testing.T) {
 	expected := []string{"0x012345", "0x01", "0x"}
 
 	for i, input := range inputs {
-		val := types.BytesToHex(input)
+		val := BytesToHex(input)
 		assert.Equal(t, expected[i], val)
 	}
 }
@@ -49,7 +48,7 @@ func TestStrToUint64(t *testing.T) {
 	expected := []uint64{0, 1, 100}
 
 	for i, input := range inputs {
-		val, err := types.StrToUint64(input)
+		val, err := StrToUint64(input)
 		assert.NoError(t, err)
 		assert.Equal(t, expected[i], val)
 	}
@@ -60,7 +59,7 @@ func TestStrToBigInt(t *testing.T) {
 	expected := []*big.Int{big.NewInt(0), big.NewInt(1), big.NewInt(100)}
 
 	for i, input := range inputs {
-		val, err := types.StrToBigInt(input)
+		val, err := StrToBigInt(input)
 		assert.NoError(t, err)
 		assert.Equal(t, expected[i], val)
 	}
@@ -70,7 +69,7 @@ func TestStrToBigIntError(t *testing.T) {
 	inputs := []string{"hello", "1a", "", "0.01"}
 
 	for _, input := range inputs {
-		_, err := types.StrToBigInt(input)
+		_, err := StrToBigInt(input)
 		assert.Error(t, err)
 	}
 }

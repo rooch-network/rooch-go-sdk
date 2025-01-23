@@ -1,13 +1,5 @@
 package client
 
-import (
-	"github.com/rooch-network/rooch-go-sdk/address"
-	"github.com/rooch-network/rooch-go-sdk/crypto"
-	"math/big"
-
-	"github.com/rooch-network/rooch-go-sdk/types"
-)
-
 type GetStatesParams struct {
 	AccessPath  string
 	StateOption *StateOption
@@ -90,16 +82,16 @@ type GetBalancesParams struct {
 	Limit  string
 }
 
-type TransferParams struct {
-	Signer    crypto.Signer[address.RoochAddress]
-	Recipient string
-	Amount    *big.Int
-	CoinType  types.TypeArgs
-}
-
-type TransferObjectParams struct {
-	Signer     crypto.Signer
-	Recipient  string
-	ObjectID   string
-	ObjectType types.TypeArgs
-}
+//type TransferParams struct {
+//	Signer    crypto.Signer[address.RoochAddress]
+//	Recipient string
+//	Amount    *big.Int
+//	//CoinType  types.TypeArgs
+//}
+//
+//type TransferObjectParams struct {
+//	Signer     crypto.Signer
+//	Recipient  string
+//	ObjectID   string
+//	ObjectType types.TypeArgs
+//}
