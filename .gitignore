@@ -1,0 +1,7 @@
+.vscode/
+.idea/
+.testnet/
+.DS_Store
+build/
+
+.swp
